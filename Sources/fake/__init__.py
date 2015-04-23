@@ -44,6 +44,9 @@ def name(male=False,female=False):
 def now():
 	return datetime.datetime.now()
 
+def number( start=1, end=100):
+	return random.randint(start, end)
+
 def date(seconds=0, minutes=0, hours=0, days=0, weeks=0, months=0, years=0, before=None, after=None):
 	"""Returns a new date within the last days, weeks, months and years"""
 	time_range =  seconds + minutes * 60 + hours * 60 * 60
