@@ -20,7 +20,7 @@ use it.
 # Install
 
 ```
-pip install --user fake
+pip install --user fake-data
 ```
 
 # Generators
