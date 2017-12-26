@@ -30,7 +30,7 @@ setup(
 	license          = "License :: OSI Approved :: BSD License",
 	classifiers      = [
 		"Programming Language :: Python",
-		"Topic :: Utilities"
+		"Topic :: Utilities",
 		"Development Status :: 4 - Beta",
 		"Environment :: Console",
 		"Intended Audience :: Developers",
