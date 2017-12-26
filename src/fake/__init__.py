@@ -15,9 +15,9 @@ __doc__ = """
 Allows to easily generate fake text and data.
 """
 
+VERSION    = "0.9.0"
 ROOT_PATH  = os.path.dirname(__file__)
 DATA_PATH  = ROOT_PATH + "/data"
-
 
 # -----------------------------------------------------------------------------
 #
@@ -70,6 +70,9 @@ def email():
 
 def emails(count=10):
 	return [email() for _ in range(count)]
+
+def user():
+	return random.choice(DATA.users)
 
 def name(male=False,female=False):
 	if female:
