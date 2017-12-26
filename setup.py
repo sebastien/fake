@@ -11,7 +11,7 @@ VERSION = eval(filter(lambda _:_.startswith("VERSION"),
 	file("src/fake/__init__.py").readlines())[0].split("=")[1])
 
 setup(
-	name             = "fake",
+	name             = "fake-data",
 	version          = VERSION,
 	description      = "Deterministic fake data generator",
 	author           = "Sébastien Pierre",
