@@ -11,7 +11,7 @@ _/        _/    _/  _/    _/  _/_/_/_/
 *Fake* is a Python module that generates fake data, with the following features:
 
 - Covers names, addresses, emails, time and dates, words, titles and paragraphs
-- Produces reproductible datasets given the same seed `fake.seed(n)`.
+- Produces the same datasets given the same seed `fake.seed(n)`.
 
 Fake is also very easy to extend: simply drop a new data file in `src/fake/data`,
 register the JSON file in `Data.DATASETS` and add a top-level function to 
@@ -27,7 +27,13 @@ pip install --user fake-data
 
 ## Personal information
 
+The `name` and `firstName` take `(male=True|False,female=True|False)` so
+that you can select whether you want a male `(male=True)` or female `(female=True)`
+name.
+
 - `fake.name()`:      Josh Benson
+- `fake.firstName()`: Leticia
+- `fake.lastName()`:  Potts
 - `fake.user()`:      dip_johnedward11
 - `fake.email()`:     golfnduo@sohu.com
 - `fake.phone()`:     +5 (645)-108103-18810
@@ -35,6 +41,7 @@ pip install --user fake-data
 - `fake.address()`:   5832, Midcrest Way
 - `fake.city()`:      Qianping
 - `fake.country()`:   Nepal
+- `fake.company()`:   Kinder Morgan, Inc.
 
 ## Time & Dates
 

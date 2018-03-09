@@ -6,7 +6,7 @@
 # License   : Revised BSD License                              © FFunction, inc
 # -----------------------------------------------------------------------------
 # Creation  : 2012-07-31
-# Last mod  : 2017-12-25
+# Last mod  : 2018-04-09
 # -----------------------------------------------------------------------------
 
 import os, json, glob, re, random, datetime
@@ -15,7 +15,7 @@ __doc__ = """
 Allows to easily generate fake text and data.
 """
 
-VERSION    = "0.9.0"
+VERSION    = "0.9.1"
 ROOT_PATH  = os.path.dirname(__file__)
 DATA_PATH  = ROOT_PATH + "/data"
 
@@ -39,6 +39,7 @@ class Data:
 		"femaleFirstNames" : "firstnames-female.json",
 		"words"            : "words.json",
 		"streets"          : "streets.json",
+		"companies"        : "companies.json",
 	}
 
 	def __init__( self ):
@@ -71,6 +72,9 @@ def email():
 def emails(count=10):
 	return [email() for _ in range(count)]
 
+def company():
+	return random.choice(DATA.companies)
+
 def user():
 	return random.choice(DATA.users)
 
@@ -81,6 +85,22 @@ def name(male=False,female=False):
 		return random.choice(DATA.maleFirstNames) + " " + random.choice(DATA.lastNames)
 	else:
 		return random.choice(random.choice((DATA.maleFirstNames,DATA.femaleFirstNames))) + " " + random.choice(DATA.lastNames)
+
+def firstName(male=False, female=False):
+	if female:
+		return random.choice(DATA.femaleFirstNames)
+	elif male:
+		return random.choice(DATA.maleFirstNames)
+	else:
+		return random.choice(random.choice((DATA.maleFirstNames,DATA.femaleFirstNames)))
+
+def lastName(male=False,female=False):
+	if female:
+		return random.choice(DATA.lastNames)
+	elif male:
+		return random.choice(DATA.lastNames)
+	else:
+		return random.choice(DATA.lastNames)
 
 def phone():
 	n = [number(1, 99)] + [number(0, 10) for _ in range(0,11)]

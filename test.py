@@ -2,6 +2,9 @@ import fake
 TYPE = (
 	"email",
 	"name",
+	"firstName",
+	"lastName",
+	"company",
 	"user",
 	"phone",
 	"zip",
