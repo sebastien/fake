@@ -1,0 +1,10 @@
+src/fake/data/cities.json
+src/fake/data/companies.json
+src/fake/data/countries.json
+src/fake/data/domains.json
+src/fake/data/firstnames-female.json
+src/fake/data/firstnames-male.json
+src/fake/data/lastnames.json
+src/fake/data/streets.json
+src/fake/data/users.json
+src/fake/data/words.json
