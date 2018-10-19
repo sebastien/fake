@@ -21,7 +21,7 @@ setup(
 	keywords         = ["fake", "data", "generator",],
 	install_requires = [],
 	package_dir      = {"":"src"},
-	package_data     = {"fake.data":list(os.path.basename(_) for _ in glob.glob("src/fake/data/*.json"))},
+	package_data     = {"fake.data":[_ for _ in glob.glob("src/fake/data/*.json")]},
 	include_package_data = True,
 	packages         = [
 		"fake",
