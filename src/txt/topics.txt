@@ -1,0 +1,616 @@
+# FROM: https://www.bps.org.uk/list-of-topics
+Addiction and Substance Abuse
+Age and Ageing
+Animal Psychology
+Arts and Entertainment
+
+
+
+Bullying and Violence
+
+
+
+Careers
+Children and Family
+Clinical Psychology
+Coaching Psychology
+Cognitive Psychology
+Community Psychology
+Consciousness and Experiential Psychology
+Consumer Psychology
+Counselling Psychology
+
+
+
+Dementia
+Depression
+Developmental Psychology
+Disability
+Disaster and Trauma Psychology
+Division of Educational Psychology
+
+
+
+Eating Disorders
+Education and Child Psychology
+Environment
+Ethics and Practice
+
+
+
+Forensic Psychology
+
+
+
+Government and Politics
+Group Psychology
+
+
+
+Health and Wellbeing
+Health Psychology
+History and Philosophy of Psychology
+
+
+
+Independent Practitioners
+
+
+
+Law and Crime
+Learning Disabilities/Difficulties
+
+
+
+Mathematical Statistical And Computing
+Memory
+Mental Health
+Military
+
+
+
+Neuropsychology
+
+
+
+Occupational Psychology
+
+
+
+Personality and Behaviour
+Professional Development
+Psychobiology
+Psychology of Women
+Psychotherapy
+
+
+
+Research
+
+
+
+Sexuality and Relationships
+Social Care and Social Services
+Social Psychology
+Sports and Exercise Psychology
+Statistical And Computing Psychology
+Stress, Anxiety, Depression
+
+
+Teaching and Learning
+Technology and Cyberpsychology
+The Society
+
+
+# FROM: https://www.ted.com/topics
+
+
+Activism
+Addiction
+Adventure
+Advertising
+Africa
+Aging
+Agriculture
+AI
+AIDS
+Aircraft
+Algorithm
+Alternative energy
+Alzheimer's
+Ancient world
+Animals
+Animation
+Antarctica
+Anthropocene
+Anthropology
+Ants
+Apes
+Archaeology
+Architecture
+Art
+Arts
+Asia
+Asteroid
+Astrobiology
+Astronomy
+Atheism
+Augmented reality
+Autism
+Autism spectrum disorder
+
+
+
+Bacteria
+Beauty
+Bees
+Behavioral economics
+Best of the Web
+Big bang
+Big problems
+Biodiversity
+Bioethics
+Biology
+Biomechanics
+Biomimicry
+Bionics
+Biosphere
+Biotech
+Birds
+Blindness
+Blockchain
+Body language
+Books
+Botany
+Brain
+Brand
+Brazil
+Buddhism
+Bullying
+Business
+
+
+
+Cancer
+Capitalism
+Cars
+Cello
+Charter for compassion
+Chemistry
+Children
+China
+Choice
+Christianity
+Cities
+Climate change
+Cloud
+Code
+Cognitive science
+Collaboration
+Comedy
+Communication
+Community
+Compassion
+Complexity
+Composing
+Computers
+Conducting
+Consciousness
+Conservation
+Consumerism
+Cooperation
+Coral reefs
+Corruption
+Cosmos
+Creativity
+Crime
+Criminal Justice
+CRISPR
+Crowdsourcing
+Cryptocurrency
+Culture
+Curiosity
+
+
+
+Dance
+Dark matter
+Data
+Death
+Debate
+Decision-making
+Deextinction
+Demo
+Democracy
+Depression
+Design
+Development
+Dinosaurs
+Disability
+Disaster relief
+Discovery
+Disease
+Diversity
+DNA
+Driverless cars
+Drones
+
+
+
+Ebola
+Ecology
+Economics
+Education
+Egypt
+Electricity
+Emotions
+Empathy
+Encryption
+Energy
+Engineering
+Entertainment
+Entrepreneur
+Environment
+Epidemiology
+Europe
+Evil
+Evolution
+Evolutionary psychology
+Exercise
+Exoskeleton
+Exploration
+Extraterrestrial life
+Extreme sports
+
+
+
+Failure
+Faith
+Family
+Farming
+Fashion
+Fear
+Feminism
+Film
+Finance
+Fish
+Flight
+Food
+Foreign Policy
+Forensics
+Friendship
+Fungi
+Funny
+Future
+
+
+
+Gaming
+Garden
+Gender
+Gender equality
+Gender spectrum
+Genetics
+Geology
+Glacier
+Global commons
+Global development
+Global issues
+Goal-setting
+God
+Google
+Government
+Grammar
+Graphic design
+Green
+Guitar
+Guns
+
+
+
+Hack
+Happiness
+Health
+Health care
+Healthcare
+Hearing
+Heart health
+History
+HIV
+Homelessness
+Human body
+Human origins
+Humanities
+Humanity
+Humor
+
+
+
+Identity
+Illness
+Illusion
+Immigration
+Inclusion
+India
+Indigenous peoples
+Industrial design
+Inequality
+Infrastructure
+Innovation
+Insects
+Intelligence
+Interface design
+Internet
+Interview
+Introvert
+Invention
+Investment
+Iran
+Iraq
+Islam
+
+
+
+Jazz
+Journalism
+Justice system
+
+
+
+Language
+Latin America
+Law
+Leadership
+LGBT
+Library
+Life
+Literature
+Live music
+Love
+
+
+
+MacArthur grant
+Machine learning
+Magic
+Manufacturing
+Map
+Marine biology
+Marketing
+Markets
+Mars
+Materials
+Math
+Media
+Medical imaging
+Medical research
+Medicine
+Meditation
+Meme
+Memory
+Men
+Mental health
+Microbes
+Microbiology
+Microfinance
+Microsoft
+Middle East
+Military
+Mind
+Mindfulness
+Mining
+Mission blue
+Mobility
+Molecular biology
+Money
+Monkeys
+Moon
+Morality
+Motivation
+Movies
+Museums
+Music
+
+
+
+Nanoscale
+Narcotics
+NASA
+Natural disaster
+Natural resources
+Nature
+Neurology
+Neuroscience
+New York
+News
+Nobel prize
+Nonviolence
+Novel
+Nuclear energy
+Nuclear weapons
+
+
+
+Obesity
+Oceans
+Oil
+Online video
+Open-source
+Opioids
+Origami
+
+
+
+Pain
+Painting
+Paleontology
+Pandemic
+Parenting
+Peace
+Performance
+Performance art
+Person
+Personal growth
+Personality
+Pharmaceuticals
+Philanthropy
+Philosophy
+Photography
+Physics
+Physiology
+Piano
+Planets
+Plants
+Plastic
+Play
+Poetry
+Policy
+Politics
+Pollution
+Population
+Potential
+Poverty
+Prediction
+Pregnancy
+Presentation
+Primates
+Prison
+Privacy
+Product design
+Productivity
+Programming
+Prosthetics
+Protests
+Psychology
+PTSD
+Public health
+Public spaces
+
+
+
+Quantum physics
+
+
+
+Race
+Refugees
+Relationships
+Religion
+Resources
+Rivers
+Robots
+Rocket science
+
+
+
+Sanitation
+Science
+Science and art
+Science Fiction
+Security
+Self
+Senses
+Sex
+Sexual violence
+Shopping
+Sight
+Simplicity
+Singer
+Skateboarding
+Slavery
+Sleep
+Smell
+Social change
+Social media
+Social science
+Society
+Sociology
+Software
+Solar energy
+Solar system
+Sound
+South America
+Space
+Speech
+Spoken word
+Sports
+Start-up
+State-building
+Statistics
+Stigma
+Storytelling
+Street art
+String theory
+Student
+Submarine
+Success
+Suicide
+Sun
+Surgery
+Surveillance
+Sustainability
+Synthetic biology
+Syria
+
+
+
+Teaching
+Technology
+Telecom
+Telescopes
+Television
+Terrorism
+Theater
+Time
+Toy
+Trafficking
+Transgender
+Transportation
+Travel
+Trees
+Trust
+Typography
+
+
+
+United States
+Universe
+Urban
+Urban planning
+
+
+
+Vaccines
+Violence
+Violin
+Virtual reality
+Virus
+Visualizations
+Vocals
+Vulnerability
+
+
+
+War
+Water
+Weather
+Web
+Wikipedia
+Wind energy
+Women
+Women in business
+Work
+Work-life balance
+World cultures
+Writing
+Wunderkind
+
+
+
+Youth
+
+
+
+3d printing
+
+

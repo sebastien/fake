@@ -203,6 +203,9 @@ def text( lang="en", length="regular", wordsPerLine=(2,12) ):
 		res.append(" ".join(line) + ".")
 	return " ".join(res)
 
+def topic( lang="en" ):
+	return choice(DATA.topics)
+
 def title( lang="en" ):
 	return text(lang, "title")
 
@@ -269,4 +272,4 @@ if __name__ == "__main__":
 	with open(DATA + "/words.json", "w") as f:
 		json.dump(words, f)
 
-# EOF
+# EOF - vim: ts=4 sw=4 noet

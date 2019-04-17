@@ -30,4 +30,7 @@ test:
 MANIFEST: $(MANIFEST)
 	echo $(MANIFEST) | xargs -n1 | sort | uniq > $@
 
+src/fake/data/topics.json: src/txt/topics.txt
+	python -c "import json;print(json.dumps([_.strip() for _ in open('$<').readlines() if _.strip() and _.strip()[0] != '#']))" > "$@"
+
 #EOF
