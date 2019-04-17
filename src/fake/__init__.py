@@ -40,6 +40,7 @@ class Data:
 		"words"            : "words.json",
 		"streets"          : "streets.json",
 		"companies"        : "companies.json",
+		"topics"           : "topics.json",
 	}
 
 	def __init__( self ):

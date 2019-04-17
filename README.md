@@ -59,3 +59,4 @@ name.
 - `fake.text()`: Concubines aisle cheer cushioned transitorie befell at soon‥
 - `fake.title()`: Dalla morrow dalla alas not evermore lineage through‥
 - `fake.paragraph()`: Strength aye accio feather into amiss. Blazon alone uncouth disaster‥
+- `fake.topic()`: Bird
