@@ -237,6 +237,9 @@ def choice( elements, length=None ):
 				return _
 			j += 1
 
+def pick( *elements ):
+	return choice(elements)
+
 def seed( value ):
 	random.seed(value)
 
