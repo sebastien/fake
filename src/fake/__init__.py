@@ -228,7 +228,7 @@ def combination( elements, mininum=0 ):
 		res.add(random.choice(elements))
 	return list(res)
 
-def choice( elements, length=None ):
+def subset( elements, length=None ):
 	if length is None: elements = list(elements)
 	length = length or len(elements)
 	i = random.randrange(length)
@@ -242,7 +242,7 @@ def choice( elements, length=None ):
 			j += 1
 
 def pick( *elements ):
-	return choice(elements)
+	return subset(elements, 1)
 
 def seed( value ):
 	random.seed(value)
