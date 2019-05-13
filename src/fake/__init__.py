@@ -228,7 +228,7 @@ def combination( elements, mininum=0 ):
 		res.add(random.choice(elements))
 	return list(res)
 
-def subset( elements, length=None ):
+def choice( elements, length=None ):
 	if length is None: elements = list(elements)
 	length = length or len(elements)
 	i = random.randrange(length)
@@ -242,7 +242,7 @@ def subset( elements, length=None ):
 			j += 1
 
 def pick( *elements ):
-	return subset(elements, 1)
+	return choice(elements)
 
 def seed( value ):
 	random.seed(value)
@@ -257,7 +257,7 @@ if __name__ == "__main__":
 	"""Import Lipsum's XML data -- see http://lipsum.sourceforge.net/whatis.php"""
 	import xml.dom.minidom
 	words = {}
-	for f in glob.glob(ROOT + "/text/*.xml"):
+	for f in glob.glob(ROOT_PATH + "/text/*.xml"):
 		rawxml    = xml.dom.minidom.parse(f)
 		textdata  = rawxml.getElementsByTagName('text')[0].firstChild.data
 		title     = rawxml.getElementsByTagName('title')[0].firstChild.data
