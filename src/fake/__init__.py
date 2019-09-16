@@ -228,6 +228,9 @@ def combination( elements, mininum=0 ):
 		res.add(random.choice(elements))
 	return list(res)
 
+def subset( elements, count=1 ):
+	return [random.choice(elements) for _ in range(count)]
+
 def choice( elements, length=None ):
 	if length is None: elements = list(elements)
 	length = length or len(elements)
