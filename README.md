@@ -13,14 +13,14 @@ _/        _/    _/  _/    _/  _/_/_/_/
 - Covers names, addresses, emails, time and dates, words, titles and paragraphs
 - Produces the same datasets given the same seed `fake.seed(n)`.
 
-Fake is also very easy to extend: simply drop a new data file in `src/fake/data`,
+Fake is also very easy to extend: simply drop a new data file in `src/py/fake/data`,
 register the JSON file in `Data.DATASETS` and add a top-level function to 
 use it.
 
 # Install
 
 ```
-pip install --user fake-data
+python3.14 -m pip install --user fake-data
 ```
 
 # Generators

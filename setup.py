@@ -1,44 +1,55 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # Encoding: utf-8
-# See: <http://docs.python.org/distutils/introduction.html>
-import glob, os
-try:
-	from setuptools import setup
-except ImportError:
-	from distutils.core import setup
+from pathlib import Path
+import re
 
-VERSION = eval(filter(lambda _:_.startswith("VERSION"),
-	file("src/fake/__init__.py").readlines())[0].split("=")[1])
+from setuptools import setup
+
+
+ROOT = Path(__file__).parent
+INIT_PY = ROOT / "src" / "py" / "fake" / "__init__.py"
+
+
+def read_version():
+	content = INIT_PY.read_text(encoding="utf-8")
+	match = re.search(r'^VERSION\s*=\s*["\']([^"\']+)["\']', content, re.MULTILINE)
+	if not match:
+		raise RuntimeError("Could not find VERSION in src/py/fake/__init__.py")
+	return match.group(1)
+
+
+VERSION = read_version()
 
 setup(
 	name             = "fake-data",
 	version          = VERSION,
 	description      = "Deterministic fake data generator",
+	long_description = (ROOT / "README.md").read_text(encoding="utf-8"),
+	long_description_content_type = "text/markdown",
 	author           = "Sébastien Pierre",
 	author_email     = "sebastien.pierre@gmail.com",
-	url              = "http://github.com/sebastien/fake",
+	url              = "https://github.com/sebastien/fake",
 	download_url     = "https://github.com/sebastien/fake/tarball/%s" % (VERSION),
 	keywords         = ["fake", "data", "generator",],
 	install_requires = [],
-	package_dir      = {"":"src"},
-	package_data     = {"fake.data":[_ for _ in glob.glob("src/fake/data/*.json")]},
+	python_requires  = ">=3.14",
+	package_dir      = {"":"src/py"},
+	package_data     = {"fake.data":["*.json"]},
 	include_package_data = True,
 	packages         = [
 		"fake",
 		"fake.data",
 	],
-	license          = "License :: OSI Approved :: BSD License",
+	license          = "BSD-3-Clause",
 	classifiers      = [
-		"Programming Language :: Python",
+		"Programming Language :: Python :: 3",
+		"Programming Language :: Python :: 3.14",
 		"Topic :: Utilities",
 		"Development Status :: 4 - Beta",
 		"Environment :: Console",
 		"Intended Audience :: Developers",
-		"License :: OSI Approved :: BSD License",
 		"Natural Language :: English",
-		"Topic :: Utilities",
 		"Operating System :: POSIX",
-		"Programming Language :: Python",
 	],
 )
 # EOF - vim: ts=4 sw=4 noet

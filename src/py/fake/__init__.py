@@ -17,7 +17,7 @@ Allows to easily generate fake text and data.
 
 VERSION    = "0.9.1"
 ROOT_PATH  = os.path.dirname(__file__)
-DATA_PATH  = ROOT_PATH + "/data"
+DATA_PATH  = os.path.join(ROOT_PATH, "data")
 
 # -----------------------------------------------------------------------------
 #
@@ -268,12 +268,12 @@ if __name__ == "__main__":
 		copyright = rawxml.getElementsByTagName('copyright')[0].firstChild.data
 		name      = os.path.splitext(os.path.basename(f))[0]
 		lang      = name.split("-")[0]
-		textdata  = re.sub("[^\w]+"," ", textdata).strip()
+		textdata  = re.sub(r"[^\w]+", " ", textdata).strip()
 		words.setdefault(lang,set())
 		words[lang] = words[lang].union(textdata.split())
 		print ("Processed", f)
 	for k in words: words[k] = list(words[k])
-	with open(DATA + "/words.json", "w") as f:
+	with open(os.path.join(DATA_PATH, "words.json"), "w") as f:
 		json.dump(words, f)
 
 # EOF - vim: ts=4 sw=4 noet
