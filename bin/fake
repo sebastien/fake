@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(dirname "$(dirname "$(readlink -f "$0")")")"
+PYTHONPATH="$ROOT/src/py${PYTHONPATH:+:$PYTHONPATH}" exec mise exec -- python -m fake "$@"

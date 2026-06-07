@@ -1,36 +1,35 @@
-SOURCES     = $(wildcard src/py/fake/*.py)
-DOC_SOURCES = $(wildcard docs/* docs/*/*)
-MANIFEST    = $(SOURCES) $(wildcard *.py api/*.* AUTHORS* README* LICENSE*)
-VERSION     = `grep VERSION src/py/fake/__init__.py | cut -d '=' -f2  | xargs echo`
-PRODUCT     = MANIFEST doc
-OS          = `uname -s | tr A-Z a-z`
+SOURCES          = $(wildcard src/py/fake/*.py)
+MANIFEST_SOURCES = $(SOURCES) $(wildcard *.py api/*.* AUTHORS* README* LICENSE*)
+MISE             = mise exec --
+VERSION          = `grep VERSION src/py/fake/__init__.py | cut -d '=' -f2 | xargs echo`
+PRODUCT          = MANIFEST
 
-.PHONY: all doc clean check tests
+.PHONY: all release tests test clean check mise-trust
 
-all: $(PRODUCT)
+mise-trust:
+	@mise trust -q -y "$(CURDIR)/mise.toml" >/dev/null 2>&1 || true
 
-release: $(PRODUCT)
+all: mise-trust $(PRODUCT)
+
+release: mise-trust $(PRODUCT)
 	git commit -a -m "Release $(VERSION)" ; true
 	git tag $(VERSION) ; true
 	git push --all ; true
-	python3.14 setup.py clean sdist
+	$(MISE) python setup.py clean sdist
 
-tests:
-	PYTHONPATH=src/py:$(PYTHONPATH) python3.14 tests/$(OS)/all.py
+tests test: mise-trust
+	PYTHONPATH=src/py:$(PYTHONPATH) $(MISE) python test.py
 
 clean:
 	@rm -rf api/ build dist MANIFEST ; true
 
-check:
-	pychecker -100 $(SOURCES)
+check: mise-trust
+	PYTHONPATH=src/py:$(PYTHONPATH) $(MISE) python -m py_compile $(SOURCES) test.py setup.py
 
-test:
-	python3.14 tests/all.py
+MANIFEST: mise-trust $(MANIFEST_SOURCES)
+	$(MISE) python -c "import pathlib, sys; paths = sorted(set(sys.argv[2:])); pathlib.Path(sys.argv[1]).write_text(''.join(f'{path}\n' for path in paths), encoding='utf-8')" "$@" $(MANIFEST_SOURCES)
 
-MANIFEST: $(MANIFEST)
-	echo $(MANIFEST) | xargs -n1 | sort | uniq > $@
+src/py/fake/data/topics.json: mise-trust src/py/fake/text/topics.txt
+	$(MISE) python -c "import json, pathlib, sys; source = pathlib.Path(sys.argv[1]); target = pathlib.Path(sys.argv[2]); topics = [line.strip() for line in source.read_text(encoding='utf-8').splitlines() if line.strip() and not line.lstrip().startswith('#')]; target.write_text(json.dumps(topics), encoding='utf-8')" "src/py/fake/text/topics.txt" "$@"
 
-src/py/fake/data/topics.json: src/py/fake/text/topics.txt
-	python3.14 -c "import json;print(json.dumps([_.strip() for _ in open('$<').readlines() if _.strip() and _.strip()[0] != '#']))" > "$@"
-
-#EOF
+# EOF
