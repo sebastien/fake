@@ -36,6 +36,11 @@ setup(
 	package_dir      = {"":"src/py"},
 	package_data     = {"fake.data":["*.json"]},
 	include_package_data = True,
+	entry_points     = {
+		"console_scripts": [
+			"fake=fake.cli:main",
+		],
+	},
 	packages         = [
 		"fake",
 		"fake.data",
