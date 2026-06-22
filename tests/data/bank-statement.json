@@ -1,0 +1,37 @@
+{
+  "document": {
+    "statement": {
+      "statementRendererClass": "com.example.bank.statements.MonthlyStatementSectionData",
+      "account": {
+        "firstName": "Data",
+        "lastName": "Lopez",
+        "email": "data.lopez@example.test",
+        "phone": "+61 2 5550 8821",
+        "accountNumberMasked": "****8291"
+      },
+      "transactions": [
+        {
+          "postedAt": "2026-01-12",
+          "merchant": "Harbor Foods",
+          "amount": -48.3
+        },
+        {
+          "postedAt": "2026-01-14",
+          "merchant": "Cloudpay Payroll",
+          "amount": 2840.0
+        }
+      ]
+    }
+  },
+  "expectations": {
+    "symbol_paths": [
+      "statement.statementRendererClass",
+      "statement.account.accountNumberMasked"
+    ],
+    "pii_paths": [
+      "statement.account.firstName",
+      "statement.account.email",
+      "statement.account.phone"
+    ]
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "document": {
+    "assessment": {
+      "assessmentType": "com.example.platform.model.AssessmentSectionData",
+      "sectionType": "com.example.platform.model.AssetsAndLiabilitiesSectionData",
+      "owner": {
+        "firstName": "Data",
+        "lastName": "Rossi",
+        "email": "data.rossi@example.test",
+        "phone": "+39 06 5550 7711"
+      },
+      "technical": {
+        "uuid": "550e8400-e29b-41d4-a716-446655440000",
+        "sqlSnippet": "select * from account_snapshot where section = 'Data'",
+        "serviceClass": "com.example.platform.services.AssessmentProjectionData",
+        "version": "service.SectionData.v3"
+      }
+    }
+  },
+  "expectations": {
+    "symbol_paths": [
+      "assessment.assessmentType",
+      "assessment.sectionType",
+      "assessment.technical.uuid",
+      "assessment.technical.sqlSnippet",
+      "assessment.technical.serviceClass",
+      "assessment.technical.version"
+    ],
+    "pii_paths": [
+      "assessment.owner.firstName",
+      "assessment.owner.email",
+      "assessment.owner.phone"
+    ]
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "document": {
+    "patient": {
+      "medicalRecordClass": "com.example.health.records.PatientSectionData",
+      "firstName": "Data",
+      "lastName": "Nguyen",
+      "email": "data.nguyen@example.test",
+      "phone": "+64 21 555 0199",
+      "dateOfBirth": "1991-09-28",
+      "visits": [
+        {
+          "visitId": "VIS-2026-07-19",
+          "providerSystemType": "com.example.health.providers.VisitContextData",
+          "diagnosisCode": "J20.9",
+          "notes": "Patient Data Nguyen reported ongoing cough symptoms."
+        }
+      ]
+    }
+  },
+  "expectations": {
+    "symbol_paths": [
+      "patient.medicalRecordClass",
+      "patient.visits.0.providerSystemType"
+    ],
+    "pii_paths": [
+      "patient.firstName",
+      "patient.email",
+      "patient.phone"
+    ]
+  }
+}

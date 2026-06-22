@@ -1,0 +1,28 @@
+{
+  "document": {
+    "contact": {
+      "crmEntityClass": "com.example.crm.contacts.ContactDetailsSectionData",
+      "firstName": "Data",
+      "lastName": "Patel",
+      "email": "data.patel@example.test",
+      "phone": "+44 20 7946 0958",
+      "company": "Northwind Advisory Group",
+      "notes": "Spoke with Data Patel about contract renewal."
+    },
+    "opportunity": {
+      "statusCode": "OPEN_PIPELINE_STAGE_2",
+      "value": 98000
+    }
+  },
+  "expectations": {
+    "symbol_paths": [
+      "contact.crmEntityClass",
+      "opportunity.statusCode"
+    ],
+    "pii_paths": [
+      "contact.firstName",
+      "contact.email",
+      "contact.phone"
+    ]
+  }
+}

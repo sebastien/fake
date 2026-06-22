@@ -1,0 +1,26 @@
+{
+  "document": {
+    "employee": {
+      "profileClass": "com.example.hr.employee.EmployeeProfileSectionData",
+      "firstName": "Data",
+      "lastName": "Kim",
+      "email": "data.kim@example.test",
+      "phone": "+81 3 5550 1010",
+      "department": "Platform Engineering",
+      "employeeId": "EMP-00412",
+      "managerChainType": "com.example.hr.employee.ReportingLineContextData"
+    }
+  },
+  "expectations": {
+    "symbol_paths": [
+      "employee.profileClass",
+      "employee.managerChainType",
+      "employee.employeeId"
+    ],
+    "pii_paths": [
+      "employee.firstName",
+      "employee.email",
+      "employee.phone"
+    ]
+  }
+}

@@ -1,4 +1,5 @@
 appenv_declare FAKE
 appenv_name    fake
-appenv_prepend PYTHONPATH `dirname \`readlink -f $APPENV_FILE\``/src
+appenv_prepend PATH $APPENV_DIR/bin
+appenv_prepend PYTHONPATH $APPENV_DIR/src
 

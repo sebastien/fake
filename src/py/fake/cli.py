@@ -1,6 +1,7 @@
 import argparse
 import inspect
 import json
+import os
 import random
 import re
 import sys
@@ -16,6 +17,31 @@ SYSTEM_RANDOM = random.SystemRandom()
 
 def _error(message):
 	raise ValueError(message)
+
+
+def _is_cli_type(name, value):
+	if not inspect.isfunction(value):
+		return False
+	try:
+		signature = inspect.signature(value)
+	except (TypeError, ValueError):
+		return False
+	for parameter in signature.parameters.values():
+		if parameter.kind in (inspect.Parameter.VAR_POSITIONAL, inspect.Parameter.VAR_KEYWORD):
+			return False
+		if parameter.default is inspect.Parameter.empty:
+			return False
+	return True
+
+
+def _available_types():
+	return tuple(sorted(
+		name for name in dir(fake)
+		if not name.startswith("_") and _is_cli_type(name, getattr(fake, name))
+	))
+
+
+AVAILABLE_TYPES = _available_types()
 
 
 def _cli_name(name):
@@ -83,6 +109,74 @@ def _resolve_generator(name):
 	if not callable(generator):
 		_error("type is not callable: {0}".format(name))
 	return generator
+
+
+def _load_json_file(path):
+	try:
+		with open(path, encoding="utf-8") as handle:
+			return json.load(handle)
+	except OSError as exc:
+		raise ValueError("unable to read file: {0}".format(path)) from exc
+	except json.JSONDecodeError as exc:
+		raise ValueError("invalid JSON file: {0}".format(path)) from exc
+
+
+def _write_json_file(path, value):
+	try:
+		with open(path, "w", encoding="utf-8") as handle:
+			json.dump(value, handle, indent=2, sort_keys=True)
+			handle.write("\n")
+	except OSError as exc:
+		raise ValueError("unable to write file: {0}".format(path)) from exc
+
+
+def _is_file_target(name):
+	return os.path.isfile(name)
+
+
+def _run_file_mode(path, extra_args, output_format, seed=None, dict_path=None):
+	if extra_args:
+		_error("unexpected argument: {0}".format(extra_args[0]))
+	payload = _load_json_file(path)
+	result = fake.anonymize(payload, seed=seed, mapping=_load_json_file(dict_path) if dict_path and os.path.exists(dict_path) else None)
+	if dict_path:
+		_write_json_file(dict_path, result["mapping"])
+	value = result["value"]
+	if output_format == "json":
+		json.dump(value, sys.stdout, default=str)
+		sys.stdout.write("\n")
+		return 0
+	json.dump(value, sys.stdout, indent=2, ensure_ascii=False, default=str)
+	sys.stdout.write("\n")
+	return 0
+
+
+def _run_deanon_mode(path, extra_args, output_format, seed=None, dict_path=None):
+	if extra_args:
+		_error("unexpected argument: {0}".format(extra_args[0]))
+	if not dict_path:
+		_error("--dict is required for deanon")
+	payload = _load_json_file(path)
+	mapping = _load_json_file(dict_path)
+	value = fake.deanonymize(payload, seed=seed, mapping=mapping)
+	if output_format == "json":
+		json.dump(value, sys.stdout, default=str)
+		sys.stdout.write("\n")
+		return 0
+	json.dump(value, sys.stdout, indent=2, ensure_ascii=False, default=str)
+	sys.stdout.write("\n")
+	return 0
+
+
+def _format_error(message):
+	if message == "the following arguments are required: type" or message.startswith("unknown type: "):
+		return "{0}\nAvailable types: {1}".format(message, ", ".join(AVAILABLE_TYPES))
+	return message
+
+
+class FakeArgumentParser(argparse.ArgumentParser):
+	def error(self, message):
+		super().error(_format_error(message))
 
 
 def _build_option_map(signature):
@@ -155,9 +249,22 @@ def _iter_text_lines(value):
 		yield str(value)
 
 
+def _parse_json_mode_args(command, tokens, seed=None, dict_path=None, output_format="text"):
+	parser = argparse.ArgumentParser(prog="fake {0}".format(command), add_help=False)
+	parser.add_argument("-s", "--seed", default=seed)
+	parser.add_argument("-d", "--dict", dest="dict_path", default=dict_path)
+	parser.add_argument("-f", "--format", choices=("text", "json"), default=output_format)
+	parser.add_argument("file")
+	try:
+		return parser.parse_args(tokens)
+	except SystemExit as exc:
+		raise ValueError("invalid {0} arguments".format(command)) from exc
+
+
 def build_parser():
-	parser = argparse.ArgumentParser(prog="fake")
+	parser = FakeArgumentParser(prog="fake")
 	parser.add_argument("-s", "--seed")
+	parser.add_argument("-d", "--dict", dest="dict_path")
 	parser.add_argument("-f", "--format", choices=("text", "json"), default="text")
 	parser.add_argument("type")
 	parser.add_argument("args", nargs=argparse.REMAINDER)
@@ -168,6 +275,19 @@ def main(argv=None):
 	parser = build_parser()
 	args = parser.parse_args(argv)
 	try:
+		if args.type == "anon":
+			parsed = _parse_json_mode_args("anon", args.args, seed=args.seed, dict_path=args.dict_path, output_format=args.format)
+			return _run_file_mode(parsed.file, [], parsed.format, seed=parsed.seed, dict_path=parsed.dict_path)
+		if args.type == "deanon":
+			parsed = _parse_json_mode_args("deanon", args.args, seed=args.seed, dict_path=args.dict_path, output_format=args.format)
+			return _run_deanon_mode(parsed.file, [], parsed.format, seed=parsed.seed, dict_path=parsed.dict_path)
+		if args.type in ("anonymize", "fuzz"):
+			if not args.args:
+				_error("the following arguments are required: file")
+			return _run_file_mode(args.args[0], args.args[1:], args.format, seed=args.seed, dict_path=args.dict_path)
+		if _is_file_target(args.type):
+			return _run_file_mode(args.type, args.args, args.format, seed=args.seed, dict_path=args.dict_path)
+
 		generator = _resolve_generator(args.type)
 		if args.seed is not None:
 			fake.seed(args.seed)

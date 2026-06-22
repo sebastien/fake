@@ -1,0 +1,34 @@
+{
+  "document": {
+    "order": {
+      "workflowClass": "com.example.commerce.checkout.OrderWorkflowSectionData",
+      "customer": {
+        "firstName": "Data",
+        "lastName": "Singh",
+        "email": "data.singh@example.test",
+        "phone": "+49 30 5550 4888"
+      },
+      "payment": {
+        "methodType": "CARD_VISA",
+        "last4": "4428"
+      },
+      "shipment": {
+        "trackingClass": "com.example.commerce.fulfillment.TrackingContextData",
+        "trackingNumber": "TRK-99010021"
+      }
+    }
+  },
+  "expectations": {
+    "symbol_paths": [
+      "order.workflowClass",
+      "order.payment.methodType",
+      "order.shipment.trackingClass",
+      "order.shipment.trackingNumber"
+    ],
+    "pii_paths": [
+      "order.customer.firstName",
+      "order.customer.email",
+      "order.customer.phone"
+    ]
+  }
+}

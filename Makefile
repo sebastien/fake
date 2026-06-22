@@ -1,35 +1,29 @@
-SOURCES          = $(wildcard src/py/fake/*.py)
-MANIFEST_SOURCES = $(SOURCES) $(wildcard *.py api/*.* AUTHORS* README* LICENSE*)
-MISE             = mise exec --
-VERSION          = `grep VERSION src/py/fake/__init__.py | cut -d '=' -f2 | xargs echo`
-PRODUCT          = MANIFEST
+##  SDK Bootstrapping
+SDK_PATH=deps/sdk
+MODULES=std py mise
 
-.PHONY: all release tests test clean check mise-trust
+# Get SDK_URL from environment if possible
+ifeq ($(origin SDK_URL), undefined)
+  SDK_URL := git@github.com:littletoolkit/littlesdk.git
+endif
 
-mise-trust:
-	@mise trust -q -y "$(CURDIR)/mise.toml" >/dev/null 2>&1 || true
+# Ensure later subshells also receive it
+MAKEOVERRIDES += SDK_URL=$(SDK_URL)
+export SDK_URL
 
-all: mise-trust $(PRODUCT)
+ifeq ($(wildcard $(SDK_PATH)),)
+$(info --→ [SDK] Installing SDK from: $(SDK_URL))
+_:=$(shell mkdir -p "$(dir $(SDK_PATH))" || true; git clone "$(SDK_URL)" "$(SDK_PATH)")
+endif
 
-release: mise-trust $(PRODUCT)
-	git commit -a -m "Release $(VERSION)" ; true
-	git tag $(VERSION) ; true
-	git push --all ; true
-	$(MISE) python setup.py clean sdist
+include $(SDK_PATH)/src/mk/sdk.mk
 
-tests test: mise-trust
-	PYTHONPATH=src/py:$(PYTHONPATH) $(MISE) python test.py
+.PHONY: anonymize-py-test anonymize-js-test
 
-clean:
-	@rm -rf api/ build dist MANIFEST ; true
+anonymize-py-test:
+	PYTHONPATH=src/py:$(PYTHONPATH) python3 -m unittest discover -s tests -p "*_test.py"
 
-check: mise-trust
-	PYTHONPATH=src/py:$(PYTHONPATH) $(MISE) python -m py_compile $(SOURCES) test.py setup.py
-
-MANIFEST: mise-trust $(MANIFEST_SOURCES)
-	$(MISE) python -c "import pathlib, sys; paths = sorted(set(sys.argv[2:])); pathlib.Path(sys.argv[1]).write_text(''.join(f'{path}\n' for path in paths), encoding='utf-8')" "$@" $(MANIFEST_SOURCES)
-
-src/py/fake/data/topics.json: mise-trust src/py/fake/text/topics.txt
-	$(MISE) python -c "import json, pathlib, sys; source = pathlib.Path(sys.argv[1]); target = pathlib.Path(sys.argv[2]); topics = [line.strip() for line in source.read_text(encoding='utf-8').splitlines() if line.strip() and not line.lstrip().startswith('#')]; target.write_text(json.dumps(topics), encoding='utf-8')" "src/py/fake/text/topics.txt" "$@"
+anonymize-js-test:
+	bun test tests/anonymize.test.js
 
 # EOF

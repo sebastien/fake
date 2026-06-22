@@ -11,6 +11,7 @@ _/        _/    _/  _/    _/  _/_/_/_/
 *Fake* is a Python module that generates fake data, with the following features:
 
 - Covers names, addresses, emails, time and dates, words, titles and paragraphs
+- Can anonymize nested JSON payloads by guessing field types and fuzzing values
 - Produces the same datasets given the same seed `fake.seed(n)`.
 
 It also ships with a standalone JavaScript module in `src/js/fake.js` that can
@@ -32,12 +33,19 @@ The package also installs a `fake` command:
 
 ```
 fake [params] TYPE [params] [COUNT]
+fake anon -s SEED [-d mapping.json] DATA.json
+fake deanon -s SEED -d mapping.json DATA.json
 ```
 
 - `-s`, `--seed` seeds the fake data generator
+- `-d`, `--dict` reads or writes the reusable anon/deanon mapping JSON
 - `-f`, `--format=text|json` selects line-based text or JSON output
 - `TYPE` is any top-level generator from the `fake` module, like `name`, `email`, `text` or `date`
 - `COUNT` defaults to `1` and can also be a range like `100-10000`, in which case the CLI picks a random count independently from `--seed`
+- `anon` anonymizes a JSON file and writes the anonymized JSON to stdout
+- `deanon` restores an anonymized JSON file with the same `--seed` and a mapping file
+- anon/deanon default to a fixed seed of `0` when `--seed` is omitted
+- If `TYPE` is a JSON file path, the CLI anonymizes it and writes the anonymized JSON to stdout
 
 Examples:
 
@@ -48,6 +56,11 @@ fake --format json city 10
 fake text --lang=fr --length=long --words-per-line=3-10
 fake name --male 3
 fake name --no-male --female
+fake anonymize payload.json
+fake anon --seed 42 --dict mapping.json payload.json
+fake deanon --seed 42 --dict mapping.json payload.anonymized.json
+fake anon --dict mapping.json payload.json
+fake deanon --dict mapping.json payload.anonymized.json
 ```
 
 # JavaScript
@@ -82,6 +95,28 @@ await fake.preload({
 });
 ```
 
+# Testing
+
+Feature coverage for anonymization lives in `tests/` and uses shared JSON fixtures
+under `tests/data/` across Python and JavaScript.
+
+- `tests/anonymize_test.py` runs with `unittest`
+- `tests/anonymize.test.js` runs with Bun
+- `tests/data/*.json` contains hand-written, industry-generic anonymization payloads
+
+Run both suites with:
+
+```sh
+make test
+```
+
+Run a single suite with:
+
+```sh
+make anonymize-py-test
+make anonymize-js-test
+```
+
 # Generators
 
 ## Personal information
@@ -100,7 +135,7 @@ name.
 - `fake.address()`:   5832, Midcrest Way
 - `fake.city()`:      Qianping
 - `fake.country()`:   Nepal
-- `fake.company()`:   Kinder Morgan, Inc.
+- `fake.company()`:   United Holdings Inc.
 
 ## Time & Dates
 
@@ -119,3 +154,39 @@ name.
 - `fake.title()`: Dalla morrow dalla alas not evermore lineage through‥
 - `fake.paragraph()`: Strength aye accio feather into amiss. Blazon alone uncouth disaster‥
 - `fake.topic()`: Bird
+
+# Anonymize
+
+`fake.anonymize(payload, seed=None, variance=0.25, hints=None, mapping=None)`
+walks a JSON-like payload, guesses likely field types from key names and value
+patterns, perturbs matched values, and returns both the anonymized payload and a
+minimal reusable reverse mapping.
+
+```python
+import fake
+
+fake.seed(42)
+result = fake.anonymize({
+  "customer": {
+    "name": "Alice Martin",
+    "email": "alice@example.com",
+    "notes": "Alice Martin can be reached at alice@example.com"
+  },
+  "amount": 1200.50
+}, seed=42)
+
+print(result["value"])
+print(result["mapping"])
+
+original = fake.deanonymize(result["value"], seed=42, mapping=result["mapping"])
+print(original)
+```
+
+Unknown strings are left unchanged by default, except when they contain values
+that were anonymized elsewhere in the payload. `fake.fuzz(...)` is an alias for
+`fake.anonymize(...)`.
+
+With the same payload and the same seed, anonymization is reproducible. The
+reverse mapping only keeps entries for string-like values that cannot be
+recovered algorithmically, so numeric, date, datetime and phone transforms do
+not grow the mapping.
