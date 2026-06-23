@@ -1,5 +1,5 @@
 # Module: match
-# Tokenization, normalization, semantic matching, and recognizer registry for classification used by anonymization.
+# Tokenization, normalization, and recognizer registry for data classification.
 
 """Tokenization, normalization, and recognizer registry for data classification."""
 
@@ -10,11 +10,7 @@ EMAIL_RE = re.compile(r"^[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Za-z0-9](?:[A-Za-z0
 PHONE_RE = re.compile(r"^\+?[\d().\-\s]{7,}$")
 DATE_RE = re.compile(r"^(\d{4})-(\d{2})-(\d{2})$")
 DATETIME_RE = re.compile(r"^(\d{4})-(\d{2})-(\d{2})([T ])(\d{2}):(\d{2})(?::(\d{2})(\.\d{1,6})?)?(Z|[+-]\d{2}:?\d{2})?$")
-INTEGER_RE = re.compile(r"^[+-]?\d+$")
-DECIMAL_RE = re.compile(r"^[+-]?(?:\d+\.\d*|\d*\.\d+)$")
 WORDS_RE = re.compile(r"[A-Za-z0-9]+(?:'[A-Za-z0-9]+)?")
-
-GENDER_VALUES = {"male", "female", "m", "f", "man", "woman", "boy", "girl", "non-binary", "nonbinary", "unknown", "other", "prefer not to say"}
 
 WORD_ALIASES = {
 	"acc": ["acc"],
@@ -46,6 +42,10 @@ WORD_ALIASES = {
 	"url": ["link"],
 	"username": ["user", "name"],
 	"zip": ["post", "code"],
+	"password": ["passwd", "pwd"],
+	"secret": ["secrets", "credential", "key"],
+	"token": ["authtoken", "auth_token", "accesstoken", "access_token", "refreshtoken"],
+	"apikey": ["api_key", "apiKey", "client_secret"],
 }
 
 TYPE_ALIASES = {
@@ -70,6 +70,7 @@ TYPE_ALIASES = {
 	"datetime": ["datetime", "timestamp", "created", "updated", "modified", "at", "time"],
 	"url": ["url", "uri", "link", "website", "site", "domain"],
 	"symbol": ["symbol", "fqcn", "classname", "class", "type"],
+	"secret": ["password", "secret", "token", "apikey", "credential", "auth", "key"],
 }
 
 RECOGNIZERS = {}
@@ -155,12 +156,6 @@ def overlapScore(left, right):
 	return (2.0 * shared) / (len(set(left_tokens)) + len(set(right_tokens)))
 
 
-def semanticMatch(left, right):
-	"""Return overlap metrics dict for `left` and `right`."""
-	overlap = overlapScore(left, right)
-	return {"overlap": overlap, "score": overlap}
-
-
 # -----------------------------------------------------------------------------
 #
 # REGISTRY
@@ -182,16 +177,6 @@ def registerMatch(kind, priority=0):
 # CORE MATCHES
 #
 # -----------------------------------------------------------------------------
-
-
-normalize_word = normalizeWord
-wordparts = wordParts
-semantic_tokens = semanticTokens
-overlap_score = overlapScore
-semantic_match = semanticMatch
-recognizer = registerMatch
-register_recognizer = registerMatch
-register_match = registerMatch
 
 
 @registerMatch("email", priority=100)
@@ -234,6 +219,8 @@ def recognizeSymbol(value, path=None, context=None, hints=None):
 	"""Recognize Java-style FQCNs and technical symbols (prevents name replacement on class names)."""
 	if not isinstance(value, str):
 		return None
+	if value.startswith("eyJ") or value.startswith(("sk_live_", "sk_test_", "ghp_", "gho_", "ghs_", "AKIA")):
+		return None
 	if "." in value and any(c.isupper() for c in value):
 		parts = wordParts(value)
 		if len([p for p in parts if len(p) > 1]) >= 3:
@@ -241,10 +228,25 @@ def recognizeSymbol(value, path=None, context=None, hints=None):
 	return None
 
 
-recognize_email = recognizeEmail
-recognize_url = recognizeUrl
-recognize_phone = recognizePhone
-recognize_symbol = recognizeSymbol
+SECRET_RE = re.compile(
+    r"^(?:(?:sk_live_|sk_test_|gh[ops]_)[0-9a-zA-Z]{20,}|AKIA[0-9A-Z]{16}|"
+    r"eyJ[A-Za-z0-9_-]{10,}\.eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_\-+/=]{10,}|"
+    r"[A-Za-z0-9+/]{25,}={0,2})$"
+)
+
+
+@registerMatch("secret", priority=85)
+def recognizeSecret(value, path=None, context=None, hints=None):
+	if not isinstance(value, str) or not value:
+		return None
+	if SECRET_RE.match(value):
+		return {"type": "secret", "confidence": 1.0}
+	if context:
+		context_tokens = [normalizeWord(t) for t in context if isinstance(t, str)]
+		secret_keywords = {"password", "passwd", "pwd", "secret", "token", "apikey", "api_key", "credential", "auth", "key", "dbpassword"}
+		if any(t in secret_keywords for t in context_tokens):
+			return {"type": "secret", "confidence": 0.9}
+	return None
 
 
 # EOF

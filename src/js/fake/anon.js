@@ -6,17 +6,17 @@ import * as match from "./match.js";
 const {
 	RECOGNIZERS,
 	normalizeWord,
-	semanticTokens,
 } = match;
 
-const MAPPING_VERSION = 2;
+const MAPPING_VERSION = 3;
+const DEFAULT_ANONYMIZE_SEED = 0;
 const FIRST_NAMES = ["Patsy", "Tami", "Vicky", "Aldo", "Layla", "Jack"];
 const EMAIL_USERS = ["patsy", "tami", "vicky", "aldo", "layla", "jack"];
 const EMAIL_DOMAINS = ["example.test", "mail.test", "demo.test"];
 
 export class Deriver {
 	constructor(seed) {
-		this.seed = String(seed || "default-anon-seed");
+		this.seed = String(seed != null ? seed : DEFAULT_ANONYMIZE_SEED);
 	}
 
 	async _digest(...parts) {
@@ -72,15 +72,16 @@ export function transformer(kind) {
 }
 
 export class Anonymizer {
-	constructor(seed = null, variance = 0.25, hints = null, mapping = null) {
-		this.seed = seed || "default-anon-seed";
+	constructor(seed = null, variance = 0.25, hints = null, mapping = null, redactSecrets = false) {
+		this.seed = seed != null ? seed : DEFAULT_ANONYMIZE_SEED;
 		this.variance = variance;
+		this.redactSecrets = redactSecrets;
 		this.hints = {};
 		if (hints) {
 			for (const [k, v] of Object.entries(hints)) this.hints[normalizeWord(k)] = v;
 		}
 		this.deriver = new Deriver(this.seed);
-		this.mapping = this._normalizeMapping(mapping, variance);
+		this.mapping = this._normalizeMapping(mapping, variance, redactSecrets);
 		this.reverseValues = {};
 		this.forwardValues = {};
 		if (mapping?.values && typeof mapping.values === "object") {
@@ -96,14 +97,16 @@ export class Anonymizer {
 		this.direct = {};
 	}
 
-	_normalizeMapping(mapping, variance) {
+	_normalizeMapping(mapping, variance, redactSecrets = false) {
 		const values = mapping?.values ? { ...mapping.values } : {};
-		return {
+		const m = {
 			version: MAPPING_VERSION,
 			seed_fingerprint: "",
 			rules: { variance },
 			values,
 		};
+		if (redactSecrets || mapping?.secrets) m.secrets = true;
+		return m;
 	}
 
 	async _seedFingerprint() {
@@ -118,16 +121,19 @@ export class Anonymizer {
 	async _infer(path, context, value) {
 		if (value == null || typeof value === "boolean") return null;
 		const entries = Object.entries(RECOGNIZERS).sort((a, b) => b[1].priority - a[1].priority);
-		for (const [, reg] of entries) {
+		for (const [kind, reg] of entries) {
+			if (kind === "secret" && !this.redactSecrets) continue;
 			const result = reg.fn(value, path, context, this.hints);
 			if (result) return result;
 		}
-		const ctxTokens = semanticTokens(context.join(" "));
+		const contextTokens = context
+			.filter(token => typeof token === "string")
+			.map(token => normalizeWord(token))
+			.filter(Boolean);
 		if (
-			ctxTokens.includes("first")
-			|| ctxTokens.includes("firstname")
-			|| ctxTokens.includes("given")
-			|| ctxTokens.includes("forename")
+			contextTokens.some(token =>
+				token === "firstname" || token === "first" || token === "given" || token === "forename"
+			)
 		) {
 			return { type: "first_name", confidence: 0.7 };
 		}
@@ -220,7 +226,19 @@ export class Anonymizer {
 	}
 }
 
-// Register symbol transformer
+transformer("secret")((self, value, kind, pathKey, reverse) => {
+	if (reverse) return self.reverseValues[kind]?.[value] ?? value;
+	return self._mappedValue(
+		kind,
+		value,
+		async (salt) => {
+			const n = await self.deriver.randbelow(16777216, kind, pathKey, value, salt);
+			return `[REDACTED-SECRET-${n.toString(16).padStart(6, "0")}]`;
+		},
+		reverse,
+	);
+});
+
 transformer("symbol")((_self, value) => value);
 transformer("first_name")((self, value, kind, pathKey, reverse) => self._mappedValue(
 	kind,
@@ -248,8 +266,8 @@ transformer("phone")((self, value, kind, pathKey, reverse) => self._mappedValue(
 ));
 
 // Public API
-export async function anonymize(payload, seed = null, variance = 0.25, hints = null, mapping = null) {
-	const a = new Anonymizer(seed, variance, hints, mapping);
+export async function anonymize(payload, seed = null, variance = 0.25, hints = null, mapping = null, redactSecrets = false) {
+	const a = new Anonymizer(seed, variance, hints, mapping, redactSecrets);
 	return await a.anonymize(payload);
 }
 
@@ -258,4 +276,8 @@ export const fuzz = anonymize;
 export async function deanonymize(payload, seed = null, variance = 0.25, hints = null, mapping = null) {
 	const a = new Anonymizer(seed, variance, hints, mapping);
 	return await a.deanonymize(payload);
+}
+
+export async function redact(payload, seed = null, variance = 0.25, hints = null, mapping = null) {
+	return await anonymize(payload, seed, variance, hints, mapping, true);
 }

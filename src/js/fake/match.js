@@ -37,6 +37,10 @@ export const WORD_ALIASES = {
 	url: ["link"],
 	username: ["user", "name"],
 	zip: ["post", "code"],
+	password: ["passwd", "pwd"],
+	secret: ["secrets", "credential", "key"],
+	token: ["authtoken", "auth_token", "accesstoken", "access_token", "refreshtoken"],
+	apikey: ["api_key", "apiKey", "client_secret"],
 };
 
 export const TYPE_ALIASES = {
@@ -61,6 +65,7 @@ export const TYPE_ALIASES = {
 	datetime: ["datetime", "timestamp", "created", "updated", "modified", "at", "time"],
 	url: ["url", "uri", "link", "website", "site", "domain"],
 	symbol: ["symbol", "fqcn", "classname", "class", "type"],
+	secret: ["password", "secret", "token", "apikey", "credential", "auth", "key"],
 };
 
 export const RECOGNIZERS = {};
@@ -148,6 +153,8 @@ export const recognizePhone = registerMatch("phone", 80)((value) => {
 
 export const recognizeSymbol = registerMatch("symbol", 95)((value) => {
 	if (typeof value !== "string") return null;
+	if (value.startsWith("eyJ")) return null;
+	if (value.startsWith("sk_live_") || value.startsWith("sk_test_") || value.startsWith("ghp_") || value.startsWith("gho_") || value.startsWith("ghs_") || value.startsWith("AKIA")) return null;
 	if (value.includes(".") && /[A-Z]/.test(value.slice(1))) {
 		const parts = wordParts(value);
 		if (parts.filter(p => p.length > 1).length >= 3) {
@@ -157,10 +164,20 @@ export const recognizeSymbol = registerMatch("symbol", 95)((value) => {
 	return null;
 });
 
-export const recognize_email = recognizeEmail;
-export const recognize_url = recognizeUrl;
-export const recognize_phone = recognizePhone;
-export const recognize_symbol = recognizeSymbol;
+export const SECRET_RE = /^(?:(?:sk_live_|sk_test_|gh[ops]_)[0-9a-zA-Z]{20,}|AKIA[0-9A-Z]{16}|eyJ[A-Za-z0-9_-]{10,}\.eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_\-+/=]{10,}|[A-Za-z0-9+/]{25,}={0,2})$/;
+
+export const recognizeSecret = registerMatch("secret", 85)((value, _path, context) => {
+	if (typeof value !== "string" || !value) return null;
+	if (SECRET_RE.test(value)) return { type: "secret", confidence: 1 };
+	if (context && Array.isArray(context)) {
+		const ctx = context.map(t => normalizeWord(t)).filter(Boolean);
+		const secretWords = ["password", "passwd", "pwd", "secret", "token", "apikey", "api_key", "credential", "auth", "key", "dbpassword"];
+		if (ctx.some(t => secretWords.includes(t))) {
+			return { type: "secret", confidence: 0.9 };
+		}
+	}
+	return null;
+});
 
 export default {
 	RECOGNIZERS,
@@ -173,4 +190,5 @@ export default {
 	recognizeUrl,
 	recognizePhone,
 	recognizeSymbol,
+	recognizeSecret,
 };

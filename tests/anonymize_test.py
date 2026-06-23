@@ -37,7 +37,7 @@ class AnonymizeFeatureTest(unittest.TestCase):
 
 	def test_fixture_inventory(self):
 		fixtures = load_fixtures()
-		self.assertEqual(7, len(fixtures))
+		self.assertEqual(8, len(fixtures))
 		for name, fixture in fixtures:
 			with self.subTest(name=name):
 				self.assertIn("document", fixture)
@@ -79,12 +79,15 @@ class AnonymizeFeatureTest(unittest.TestCase):
 
 	def test_mapping_has_expected_shape(self):
 		for name, fixture in load_fixtures():
-			mapping = fake.anonymize(fixture["document"], seed=42)["mapping"]
+			redact = name == "secrets.json"
+			mapping = fake.anonymize(fixture["document"], seed=42, redact_secrets=redact)["mapping"]
 			with self.subTest(name=name):
-				self.assertEqual(2, mapping["version"])
+				self.assertEqual(3, mapping["version"])
 				self.assertEqual({"variance": 0.25}, mapping["rules"])
 				self.assertEqual(16, len(mapping["seed_fingerprint"]))
 				self.assertIsInstance(mapping["values"], dict)
+				if name == "secrets.json":
+					self.assertTrue(mapping.get("secrets", False))
 
 	def test_anonymize_is_deterministic(self):
 		for name, fixture in load_fixtures():
@@ -96,7 +99,7 @@ class AnonymizeFeatureTest(unittest.TestCase):
 	def test_pii_fields_are_anonymized(self):
 		for name, fixture in load_fixtures():
 			original = fixture["document"]
-			result = fake.anonymize(original, seed=42)
+			result = fake.anonymize(original, seed=42, redact_secrets=True)
 			anonymized = result["value"]
 			for path in fixture["expectations"]["pii_paths"]:
 				with self.subTest(name=name, path=path):

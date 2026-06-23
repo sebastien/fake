@@ -1,4 +1,4 @@
-const VERSION = "0.9.1";
+const VERSION = "0.9.2";
 
 const DATASETS = {
 	countries: "countries.json",
@@ -359,15 +359,102 @@ async function clearCache() {
 function email() {
 	const data = assertPreloaded("email");
 	return `${choice(data.users)}@${choice(data.domains)}`;
-	}
+}
 
 function emails(count = 10) {
 	return Array.from({ length: count }, () => email());
+}
+
+// Ported from Python's _company_name(). Extracts word tokens and legal suffixes
+// from real company names to generate novel combinations.
+const COMPANY_WORD_RE = /[A-Za-z0-9]+/g;
+const COMPANY_SUFFIXES_BY_TOKENS = {
+	"inc": "Inc.",
+	"incorporated": "Incorporated",
+	"corporation": "Corporation",
+	"corp": "Corp.",
+	"company": "Company",
+	"co": "Co.",
+	"group": "Group",
+	"holding": "Holding",
+	"holdings": "Holdings",
+	"llc": "LLC",
+	"ltd": "Ltd.",
+	"limited": "Limited",
+	"plc": "PLC",
+	"lp": "L.P.",
+	"partners": "Partners",
+};
+const COMPANY_SUFFIX_TOKENS = new Set(Object.keys(COMPANY_SUFFIXES_BY_TOKENS));
+
+let companyWords = null;
+let companySuffixes = null;
+
+function normalizeCompanyWord(word) {
+	if (!word) return null;
+	if (/^\d+$/.test(word) || word.length <= 2 && word !== word.toUpperCase()) return null;
+	if (COMPANY_SUFFIX_TOKENS.has(word.toLowerCase())) return null;
+	if (["and", "the", "of"].includes(word.toLowerCase())) return null;
+	if (word === word.toUpperCase()) return word;
+	return word[0].toUpperCase() + word.slice(1).toLowerCase();
+}
+
+function loadCompanyTerms() {
+	const words = {};
+	const suffixes = {};
+	const names = assertPreloaded("companyTerms").companies;
+	const suffixEntries = Object.entries(COMPANY_SUFFIXES_BY_TOKENS).sort((a, b) => b[0].length - a[0].length);
+	for (const companyName of names) {
+		const tokens = companyName.match(COMPANY_WORD_RE) || [];
+		if (!tokens.length) continue;
+		let suffix = null;
+		for (const [tokenKey, formattedSuffix] of suffixEntries) {
+			if (tokens.length < 1) continue;
+			const lastToken = tokens[tokens.length - 1].toLowerCase();
+			if (lastToken === tokenKey) {
+				suffix = formattedSuffix;
+				tokens.pop();
+				break;
+			}
+		}
+		if (suffix) suffixes[suffix] = null;
+		if (tokens.length === 1) continue;
+		for (const token of tokens) {
+			const normalized = normalizeCompanyWord(token);
+			if (normalized) words[normalized] = null;
+		}
 	}
+	companyWords = Object.keys(words);
+	companySuffixes = Object.keys(suffixes);
+	return [companyWords, companySuffixes];
+}
+
+function companyTerms() {
+	if (companyWords === null || companySuffixes === null) {
+		loadCompanyTerms();
+	}
+	return [companyWords, companySuffixes];
+}
+
+function companyName() {
+	const [words, suffixes] = companyTerms();
+	const first = choice(words);
+	const parts = [first];
+	if (words.length > 1) {
+		let second = choice(words);
+		for (let attempt = 0; attempt < 5; attempt++) {
+			if (second !== first) break;
+			second = choice(words);
+		}
+		if (second !== first) parts.push(second);
+	}
+	if (suffixes.length) parts.push(choice(suffixes));
+	return parts.join(" ");
+}
 
 function company() {
-	return choice(assertPreloaded("company").companies);
-	}
+	return companyName();
+}
 
 function user() {
 	return choice(assertPreloaded("user").users);
@@ -395,11 +482,9 @@ function firstName(male = false, female = false) {
 	return choice(choice([data.maleFirstNames, data.femaleFirstNames]));
 	}
 
-function lastName(male = false, female = false) {
-	void male;
-	void female;
+function lastName() {
 	return choice(assertPreloaded("lastName").lastNames);
-	}
+}
 
 function phone() {
 	const numbers = [number(1, 99), ...Array.from({ length: 11 }, () => number(0, 10))];
@@ -546,6 +631,9 @@ function choice(elements, length = null) {
 		const values = Array.from(elements);
 		return values[rng.randrange(values.length)];
 	}
+	if (length <= 0) {
+		throw new RangeError("length must be a positive integer");
+	}
 	const index = rng.randrange(length);
 	if (Array.isArray(elements) || typeof elements === "string") {
 		return elements[index];
@@ -562,7 +650,21 @@ function choice(elements, length = null) {
 
 function pick(...elements) {
 	return choice(elements);
-	}
+}
+
+function password() {
+	const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*";
+	const length = rng.randint(12, 24);
+	return Array.from({ length }, () => choice(chars)).join("");
+}
+
+function apiKey() {
+	const prefixes = ["sk_live_", "sk_test_", "ghp_", "AKIA"];
+	const prefix = choice(prefixes);
+	const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+	const suffixLength = prefix.startsWith("sk") ? 24 : 16;
+	return prefix + Array.from({ length: suffixLength }, () => choice(chars)).join("");
+}
 
 function seed(value) {
 	rng.seed(value);
@@ -571,7 +673,6 @@ function seed(value) {
 
 const fake = {
 	VERSION,
-	DATASETS,
 	configure,
 	preload,
 	clearCache,
@@ -605,12 +706,13 @@ const fake = {
 	subset,
 	choice,
 	pick,
+	password,
+	apiKey,
 	seed,
 };
 
 export {
 	VERSION,
-	DATASETS,
 	configure,
 	preload,
 	clearCache,
@@ -644,9 +746,9 @@ export {
 	subset,
 	choice,
 	pick,
+	password,
+	apiKey,
 	seed,
 };
-
-
 
 export default fake;

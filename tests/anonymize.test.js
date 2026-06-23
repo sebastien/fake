@@ -3,7 +3,7 @@ import { spawnSync } from "node:child_process";
 import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { anonymize, deanonymize } from "../src/js/fake/anon.js";
+import { anonymize, deanonymize, redact } from "../src/js/fake/anon.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -29,8 +29,8 @@ function getPath(value, pathValue) {
 describe("anonymize fixtures", async () => {
 	const fixtures = await loadFixtures();
 
-	test("loads all seven shared fixtures", () => {
-		expect(fixtures).toHaveLength(7);
+	test("loads all eight shared fixtures", () => {
+		expect(fixtures).toHaveLength(8);
 	});
 
 	for (const [name, fixture] of fixtures) {
@@ -49,7 +49,7 @@ describe("anonymize fixtures", async () => {
 
 		test(`${name}: mapping has expected shape`, async () => {
 			const result = await anonymize(fixture.document, 42);
-			expect(result.mapping.version).toBe(2);
+			expect(result.mapping.version).toBe(3);
 			expect(result.mapping.rules).toEqual({ variance: 0.25 });
 			expect(result.mapping.seed_fingerprint).toHaveLength(16);
 			expect(result.mapping.values).toBeObject();
@@ -62,7 +62,9 @@ describe("anonymize fixtures", async () => {
 		});
 
 		test(`${name}: PII fields are anonymized consistently`, async () => {
-			const result = await anonymize(fixture.document, 42);
+			const result = name === "secrets.json"
+				? await redact(fixture.document, 42)
+				: await anonymize(fixture.document, 42);
 			for (const pathValue of fixture.expectations.pii_paths) {
 				expect(getPath(result.value, pathValue)).not.toEqual(getPath(fixture.document, pathValue));
 			}

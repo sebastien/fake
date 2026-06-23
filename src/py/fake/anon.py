@@ -1,6 +1,3 @@
-# Module: anon
-# Deterministic anonymization of nested payloads using seeded recognizers and reversible mappings.
-
 """Deterministic anonymization of nested payloads using seeded recognizers and reversible mappings."""
 
 import datetime
@@ -10,7 +7,7 @@ import json
 from .data import CURRENT_SEED, DEFAULT_ANONYMIZE_SEED
 from .match import RECOGNIZERS, normalizeWord
 
-MAPPING_VERSION = 2
+MAPPING_VERSION = 3
 
 FIRST_NAMES = ["Patsy", "Tami", "Vicky", "Aldo", "Layla", "Jack"]
 EMAIL_USERS = ["patsy", "tami", "vicky", "aldo", "layla", "jack"]
@@ -51,6 +48,8 @@ class Deriver:
 		return hashlib.sha256(payload).digest()
 
 	def _coerce(self, value):
+		if value is None:
+			return None
 		if isinstance(value, (list, tuple)):
 			return [self._coerce(part) for part in value]
 		if isinstance(value, dict):
@@ -92,18 +91,17 @@ class Deriver:
 
 
 class Anonymizer:
-	"""Applies recognizers and transformers to nested payloads (main entrypoint for anonymize/deanonymize)."""
-
-	def __init__(self, seed=None, variance=0.25, hints=None, mapping=None):
+	def __init__(self, seed=None, variance=0.25, hints=None, mapping=None, redact_secrets=False):
 		self.seed = (
 			CURRENT_SEED
 			if seed is None and CURRENT_SEED is not None
 			else (seed if seed is not None else DEFAULT_ANONYMIZE_SEED)
 		)
 		self.variance = variance
+		self.redact_secrets = redact_secrets
 		self.hints = {normalizeWord(k): v for k, v in (hints or {}).items()}
 		self.deriver = Deriver(self.seed)
-		self.mapping = self._normalize_mapping(mapping, variance, self.seed)
+		self.mapping = self._normalize_mapping(mapping, variance, self.seed, redact_secrets)
 		self.reverse_values = {}
 		self.forward_values = {}
 		if mapping and isinstance(mapping.get("values"), dict):
@@ -114,21 +112,22 @@ class Anonymizer:
 						mapped: original for original, mapped in entries.items()
 					}
 		self.direct = {}
-		self.embedded_forward = {}
-		self.embedded_reverse = {}
 
-	def _normalize_mapping(self, mapping, variance, seed):
+	def _normalize_mapping(self, mapping, variance, seed, redact_secrets=False):
 		values = {}
 		if mapping and isinstance(mapping.get("values"), dict):
 			for kind, entries in mapping["values"].items():
 				if isinstance(entries, dict):
 					values[kind] = dict(entries)
-		return {
+		m = {
 			"version": MAPPING_VERSION,
 			"seed_fingerprint": hashlib.sha256(str(seed).encode()).hexdigest()[:16],
 			"rules": {"variance": variance},
 			"values": values,
 		}
+		if redact_secrets or (mapping and mapping.get("secrets")):
+			m["secrets"] = True
+		return m
 
 	def _infer(self, path, context, value):
 		if value is None or isinstance(value, bool):
@@ -136,6 +135,8 @@ class Anonymizer:
 		for kind, reg in sorted(
 			RECOGNIZERS.items(), key=lambda item: -item[1]["priority"]
 		):
+			if kind == "secret" and not self.redact_secrets:
+				continue
 			result = reg["fn"](value, path, context, self.hints)
 			if result:
 				return result
@@ -214,14 +215,24 @@ class Anonymizer:
 		return {"value": self._apply(payload, False), "mapping": self.mapping}
 
 	def deanonymize(self, payload):
-		"""Restore `payload` using the current mapping (uses self.mapping)."""
 		self._collect_direct(payload, True)
 		return self._apply(payload, True)
 
 
+@transformer("secret")
+def transformSecret(self, value, kind, path_key, reverse=False):
+	if reverse:
+		return self.reverse_values.get(kind, {}).get(value, value)
+	return self._mapped_value(
+		kind,
+		value,
+		lambda salt: f"[REDACTED-SECRET-{self.deriver.randbelow(16777216, kind, path_key, value, salt):06x}]",
+		reverse,
+	)
+
+
 @transformer("symbol")
 def transformSymbol(self, value, kind, path_key, reverse=False):
-	"""No-op transformer for technical symbols and Java FQCNs (prevents name replacement on class names)."""
 	return value
 
 
@@ -268,25 +279,26 @@ def transformPhone(self, value, kind, path_key, reverse=False):
 # -----------------------------------------------------------------------------
 
 
-def anonymize(payload, seed=None, variance=0.25, hints=None, mapping=None):
-	"""Return anonymized copy of `payload` (returns dict with `value` and `mapping`)."""
+def anonymize(payload, seed=None, variance=0.25, hints=None, mapping=None, redact_secrets=False):
 	return Anonymizer(
-		seed=seed, variance=variance, hints=hints, mapping=mapping
+		seed=seed, variance=variance, hints=hints, mapping=mapping, redact_secrets=redact_secrets
 	).anonymize(payload)
 
 
-def fuzz(payload, seed=None, variance=0.25, hints=None, mapping=None):
-	"""Alias for `anonymize` (same signature)."""
+def fuzz(payload, seed=None, variance=0.25, hints=None, mapping=None, redact_secrets=False):
 	return anonymize(
-		payload, seed=seed, variance=variance, hints=hints, mapping=mapping
+		payload, seed=seed, variance=variance, hints=hints, mapping=mapping, redact_secrets=redact_secrets
 	)
 
 
 def deanonymize(payload, seed=None, variance=0.25, hints=None, mapping=None):
-	"""Restore a payload produced by `anonymize` (requires mapping)."""
 	return Anonymizer(
 		seed=seed, variance=variance, hints=hints, mapping=mapping
 	).deanonymize(payload)
+
+
+def redact(payload, seed=None, variance=0.25, hints=None, mapping=None):
+	return anonymize(payload, seed=seed, variance=variance, hints=hints, mapping=mapping, redact_secrets=True)
 
 
 # EOF

@@ -1,24 +1,24 @@
 ```
-                                             
-    _/_/_/_/    _/_/    _/    _/  _/_/_/_/   
-   _/        _/    _/  _/  _/    _/          
-  _/_/_/    _/_/_/_/  _/_/      _/_/_/       
- _/        _/    _/  _/  _/    _/            
-_/        _/    _/  _/    _/  _/_/_/_/       
-                                             
+
+    _/_/_/_/    _/_/    _/    _/  _/_/_/_/
+   _/        _/    _/  _/  _/    _/
+  _/_/_/    _/_/_/_/  _/_/      _/_/_/
+ _/        _/    _/  _/  _/    _/
+_/        _/    _/  _/    _/  _/_/_/_/
+
 ```
 
 *Fake* is a Python module that generates fake data, with the following features:
 
 - Covers names, addresses, emails, time and dates, words, titles and paragraphs
-- Can anonymize nested JSON payloads by guessing field types and fuzzing values
+- Can anonymize nested JSON payloads by guessing field types and fuzzing values (including optional redaction of secrets/passwords/tokens)
 - Produces the same datasets given the same seed `fake.seed(n)`.
 
 It also ships with a standalone JavaScript module in `src/js/fake.js` that can
 fetch the datasets directly from GitHub.
 
 Fake is also very easy to extend: simply drop a new data file in `src/py/fake/data`,
-register the JSON file in `Data.DATASETS` and add a top-level function to 
+register the JSON file in `Data.DATASETS` and add a top-level function to
 use it.
 
 # Install
@@ -33,7 +33,8 @@ The package also installs a `fake` command:
 
 ```
 fake [params] TYPE [params] [COUNT]
-fake anon -s SEED [-d mapping.json] DATA.json
+fake anon -s SEED [-d mapping.json] [--redact-secrets] DATA.json
+fake redact -s SEED [-d mapping.json] DATA.json
 fake deanon -s SEED -d mapping.json DATA.json
 ```
 
@@ -42,7 +43,7 @@ fake deanon -s SEED -d mapping.json DATA.json
 - `-f`, `--format=text|json` selects line-based text or JSON output
 - `TYPE` is any top-level generator from the `fake` module, like `name`, `email`, `text` or `date`
 - `COUNT` defaults to `1` and can also be a range like `100-10000`, in which case the CLI picks a random count independently from `--seed`
-- `anon` anonymizes a JSON file and writes the anonymized JSON to stdout
+- `anon` / `redact` anonymizes a JSON file (with optional `--redact-secrets` for passwords/tokens/API keys) and writes to stdout
 - `deanon` restores an anonymized JSON file with the same `--seed` and a mapping file
 - anon/deanon default to a fixed seed of `0` when `--seed` is omitted
 - If `TYPE` is a JSON file path, the CLI anonymizes it and writes the anonymized JSON to stdout
@@ -57,7 +58,8 @@ fake text --lang=fr --length=long --words-per-line=3-10
 fake name --male 3
 fake name --no-male --female
 fake anonymize payload.json
-fake anon --seed 42 --dict mapping.json payload.json
+fake redact --seed 42 payload.json
+fake anon --seed 42 --redact-secrets --dict mapping.json payload.json
 fake deanon --seed 42 --dict mapping.json payload.anonymized.json
 fake anon --dict mapping.json payload.json
 fake deanon --dict mapping.json payload.anonymized.json
@@ -65,11 +67,12 @@ fake deanon --dict mapping.json payload.anonymized.json
 
 # JavaScript
 
-The JavaScript module is ESM-only and is designed to be dropped into another
-project directly.
+The JavaScript module is ESM-only. It can be dropped into a project directly or loaded from a CDN/GitHub.
+
+**From CDN (recommended):**
 
 ```js
-import fake from "./src/js/fake.js";
+import fake from "https://cdn.jsdelivr.net/gh/sebastien/fake@main/src/js/fake.js";
 
 await fake.preload();
 fake.seed(1);
@@ -77,10 +80,17 @@ fake.seed(1);
 console.log(fake.name());
 console.log(fake.email());
 console.log(fake.title());
+console.log(await fake.redact({ password: "hunter2", apiKey: "sk_live_xxx" }));
+```
+
+**Or from local file:**
+
+```js
+import fake from "./src/js/fake.js";
 ```
 
 The JavaScript API mirrors the Python top-level API after `await fake.preload()`.
-Datasets are fetched with `fetch()` from GitHub using a CDN or raw GitHub URL.
+Datasets are fetched with `fetch()` from GitHub (via CDN or raw URL). In Bun they are cached locally.
 
 In Bun, fetched datasets are also cached locally in `.cache/fake/*.json`.
 
@@ -155,12 +165,15 @@ name.
 - `fake.paragraph()`: Strength aye accio feather into amiss. Blazon alone uncouth disaster‥
 - `fake.topic()`: Bird
 
-# Anonymize
+# Anonymize / Redact Secrets
 
-`fake.anonymize(payload, seed=None, variance=0.25, hints=None, mapping=None)`
-walks a JSON-like payload, guesses likely field types from key names and value
-patterns, perturbs matched values, and returns both the anonymized payload and a
+`fake.anonymize(payload, seed=None, variance=0.25, hints=None, mapping=None, redact_secrets=False)`
+(and alias `fake.fuzz()`) walks a JSON-like payload, guesses likely field types from key names and value
+patterns (including high-entropy secrets, passwords, tokens, API keys), and returns both the anonymized payload and a
 minimal reusable reverse mapping.
+
+Use `fake.redact(payload, ...)` or `redact_secrets=True` to enable secret redaction (replaces with `[REDACTED-SECRET-...]`
+and adds `"secrets": true` to the mapping so it can be stored securely).
 
 ```python
 import fake
@@ -170,10 +183,11 @@ result = fake.anonymize({
   "customer": {
     "name": "Alice Martin",
     "email": "alice@example.com",
-    "notes": "Alice Martin can be reached at alice@example.com"
+    "password": "hunter2",
+    "apiKey": "sk_live_9f8e7d6c5b4a3f2e1d0c9b8a7f6e5d4c"
   },
   "amount": 1200.50
-}, seed=42)
+}, seed=42, redact_secrets=True)
 
 print(result["value"])
 print(result["mapping"])

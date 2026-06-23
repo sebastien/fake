@@ -19,7 +19,7 @@ __doc__ = """
 Allows to easily generate fake text and data.
 """
 
-VERSION    = "0.9.1"
+VERSION    = "0.9.2"
 ROOT_PATH  = os.path.dirname(__file__)
 DATA_PATH  = os.path.join(ROOT_PATH, "data")
 DEFAULT_ANONYMIZE_SEED = 0
@@ -172,7 +172,7 @@ def company():
 def user():
 	return random.choice(DATA.users)
 
-def name(male=False,female=False):
+def name(male=False, female=False):
 	if female:
 		return random.choice(DATA.femaleFirstNames) + " " + random.choice(DATA.lastNames)
 	elif male:
@@ -188,24 +188,19 @@ def firstName(male=False, female=False):
 	else:
 		return random.choice(random.choice((DATA.maleFirstNames,DATA.femaleFirstNames)))
 
-def lastName(male=False,female=False):
-	if female:
-		return random.choice(DATA.lastNames)
-	elif male:
-		return random.choice(DATA.lastNames)
-	else:
-		return random.choice(DATA.lastNames)
+def lastName():
+	return random.choice(DATA.lastNames)
 
 def phone():
 	n = [number(1, 99)] + [number(0, 10) for _ in range(0,11)]
 	return "+{0} ({1}{2}{3})-{4}{5}{6}{7}-{8}{9}{10}{11}".format(*n)
 
 def zip():
-	return number (10, 99) * 1000 + number (1,9) * 100 + number (0,100)
+	return number(10, 99) * 1000 + number(1, 9) * 100 + number(0, 100)
 
 def address():
 	return "{0}, {1}".format(
-		number (1, 10000),
+		number(1, 10000),
 		random.choice(DATA.streets)
 	)
 
@@ -241,7 +236,7 @@ def hour():
 def now():
 	return datetime.datetime.now()
 
-def number( start=1, end=100):
+def number(start=1, end=100):
 	return random.randint(start, end)
 
 def date(seconds=0, minutes=0, hours=0, days=0, weeks=0, months=0, years=0, before=None, after=None):
@@ -271,14 +266,18 @@ def time(seconds=0, minutes=0, hours=0, days=0, weeks=0, months=0, years=0):
 #
 # -----------------------------------------------------------------------------
 
-def word( lang="en" ):
+def word(lang="en"):
 	return random.choice(DATA.words[lang])
 
-def words( count=1, lang="en" ):
+def words(count=1, lang="en"):
 	return [random.choice(DATA.words[lang]) for _ in range(count)]
 
-def text( lang="en", length="regular", wordsPerLine=(2,12) ):
-	# FIXME: Should improve by using a Markov-style algorithm
+def text(lang="en", length="regular", wordsPerLine=(2, 12)):
+	try:
+		from .corpus import markovText
+		return markovText(lang, length, wordsPerLine)
+	except (ImportError, KeyError):
+		pass
 	res = []
 	if length == "one":
 		length = 1
@@ -311,10 +310,8 @@ def topic( lang="en" ):
 def title( lang="en" ):
 	return text(lang, "title")
 
-def paragraph( lang="en" ):
-	# FIXME: Should do some actual stats here to determine the best range of
-	# lines per paragraph
-	return text(lang, (5,25))
+def paragraph(lang="en"):
+	return text(lang, (5, 25))
 
 # -----------------------------------------------------------------------------
 #
@@ -322,20 +319,20 @@ def paragraph( lang="en" ):
 #
 # -----------------------------------------------------------------------------
 
-def combination( elements, mininum=0 ):
+def combination(elements, mininum=0):
 	count = random.randrange(mininum, len(elements))
 	res = set()
 	while len(res) < count:
 		res.add(random.choice(elements))
 	return list(res)
 
-def subset( elements, count=1 ):
+def subset(elements, count=1):
 	return [random.choice(elements) for _ in range(count)]
 
-def choice( elements, length=None ):
+def choice(elements, length=None):
 	if length is None:
 		elements = list(elements)
-	length = length or len(elements)
+		length = len(elements)
 	i = random.randrange(length)
 	if type(elements) in (list,tuple):
 		return elements[i]
@@ -346,10 +343,23 @@ def choice( elements, length=None ):
 				return item
 			j += 1
 
-def pick( *elements ):
+def pick(*elements):
 	return choice(elements)
 
-def seed( value ):
+def seed(value):
 	global CURRENT_SEED
 	CURRENT_SEED = value
 	random.seed(value)
+
+
+def password():
+	chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*"
+	length = random.randint(12, 24)
+	return "".join(random.choice(chars) for _ in range(length))
+
+
+def apiKey():
+	prefixes = ["sk_live_", "sk_test_", "ghp_", "AKIA"]
+	prefix = random.choice(prefixes)
+	chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+	return prefix + "".join(random.choice(chars) for _ in range(24 if prefix.startswith("sk") else 16))

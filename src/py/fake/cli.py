@@ -134,11 +134,16 @@ def _is_file_target(name):
 	return os.path.isfile(name)
 
 
-def _run_file_mode(path, extra_args, output_format, seed=None, dict_path=None):
+def _run_file_mode(path, extra_args, output_format, seed=None, dict_path=None, redact_secrets=False):
 	if extra_args:
 		_error("unexpected argument: {0}".format(extra_args[0]))
 	payload = _load_json_file(path)
-	result = fake.anonymize(payload, seed=seed, mapping=_load_json_file(dict_path) if dict_path and os.path.exists(dict_path) else None)
+	result = fake.anonymize(
+		payload,
+		seed=seed,
+		mapping=_load_json_file(dict_path) if dict_path and os.path.exists(dict_path) else None,
+		redact_secrets=redact_secrets,
+	)
 	if dict_path:
 		_write_json_file(dict_path, result["mapping"])
 	value = result["value"]
@@ -281,12 +286,14 @@ def main(argv=None):
 		if args.type == "deanon":
 			parsed = _parse_json_mode_args("deanon", args.args, seed=args.seed, dict_path=args.dict_path, output_format=args.format)
 			return _run_deanon_mode(parsed.file, [], parsed.format, seed=parsed.seed, dict_path=parsed.dict_path)
-		if args.type in ("anonymize", "fuzz"):
+		if args.type in ("anonymize", "fuzz", "redact"):
 			if not args.args:
 				_error("the following arguments are required: file")
-			return _run_file_mode(args.args[0], args.args[1:], args.format, seed=args.seed, dict_path=args.dict_path)
+			redact_secrets = args.type == "redact"
+			return _run_file_mode(args.args[0], args.args[1:], args.format, seed=args.seed, dict_path=args.dict_path, redact_secrets=redact_secrets)
 		if _is_file_target(args.type):
-			return _run_file_mode(args.type, args.args, args.format, seed=args.seed, dict_path=args.dict_path)
+			redact_secrets = args.type.endswith(".json") and any(x in args.type.lower() for x in ("secret", "password", "token", "key"))
+			return _run_file_mode(args.type, args.args, args.format, seed=args.seed, dict_path=args.dict_path, redact_secrets=redact_secrets)
 
 		generator = _resolve_generator(args.type)
 		if args.seed is not None:

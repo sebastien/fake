@@ -5,10 +5,8 @@
 # Thin export surface. Implementation lives in data.py and anon.py.
 # -----------------------------------------------------------------------------
 
-from .data import *  # noqa: F401,F403
-from .anon import anonymize, fuzz, deanonymize  # noqa: F401
+from .anon import anonymize, fuzz, deanonymize, redact  # noqa: F401
 
-# Explicit re-exports for clarity
 from .data import (
     VERSION,
     DATA,
@@ -21,6 +19,7 @@ from .data import (
     company,
     user,
     phone,
+    zip,
     address,
     city,
     country,
@@ -42,6 +41,8 @@ from .data import (
     pick,
     combination,
     subset,
+    password,
+    apiKey,
 )
 
 __all__ = [
@@ -50,6 +51,7 @@ __all__ = [
     "anonymize",
     "fuzz",
     "deanonymize",
+    "redact",
     "seed",
     "name",
     "firstName",
@@ -81,4 +83,6 @@ __all__ = [
     "pick",
     "combination",
     "subset",
+    "password",
+    "apiKey",
 ]
