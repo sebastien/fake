@@ -7,14 +7,14 @@ from setuptools import setup
 
 
 ROOT = Path(__file__).parent
-INIT_PY = ROOT / "src" / "py" / "fake" / "__init__.py"
+DATA_PY = ROOT / "src" / "py" / "fake" / "data.py"
 
 
 def read_version():
-	content = INIT_PY.read_text(encoding="utf-8")
+	content = DATA_PY.read_text(encoding="utf-8")
 	match = re.search(r'^VERSION\s*=\s*["\']([^"\']+)["\']', content, re.MULTILINE)
 	if not match:
-		raise RuntimeError("Could not find VERSION in src/py/fake/__init__.py")
+		raise RuntimeError("Could not find VERSION in src/py/fake/data.py")
 	return match.group(1)
 
 
@@ -32,9 +32,12 @@ setup(
 	download_url     = "https://github.com/sebastien/fake/tarball/%s" % (VERSION),
 	keywords         = ["fake", "data", "generator",],
 	install_requires = [],
-	python_requires  = ">=3.14",
+	python_requires  = ">=3.9",
 	package_dir      = {"":"src/py"},
-	package_data     = {"fake.data":["*.json"]},
+	package_data     = {
+		"fake.data": ["*.json"],
+		"fake.corpus": ["*.xml", "*.txt"],
+	},
 	include_package_data = True,
 	entry_points     = {
 		"console_scripts": [
@@ -44,11 +47,12 @@ setup(
 	packages         = [
 		"fake",
 		"fake.data",
+		"fake.corpus",
 	],
 	license          = "BSD-3-Clause",
 	classifiers      = [
 		"Programming Language :: Python :: 3",
-		"Programming Language :: Python :: 3.14",
+		"Programming Language :: Python :: 3.9",
 		"Topic :: Utilities",
 		"Development Status :: 4 - Beta",
 		"Environment :: Console",

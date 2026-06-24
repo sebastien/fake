@@ -1,1 +1,3 @@
 recursive-include src/py/fake/data *.json
+recursive-include src/py/fake/corpus *.xml
+recursive-include src/py/fake/corpus *.txt

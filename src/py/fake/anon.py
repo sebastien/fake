@@ -3,6 +3,7 @@
 import datetime
 import hashlib
 import json
+import random
 
 from .data import CURRENT_SEED, DEFAULT_ANONYMIZE_SEED
 from .match import RECOGNIZERS, normalizeWord
@@ -286,6 +287,8 @@ def anonymize(payload, seed=None, variance=0.25, hints=None, mapping=None, redac
 
 
 def fuzz(payload, seed=None, variance=0.25, hints=None, mapping=None, redact_secrets=False):
+	if seed is None:
+		seed = random.randint(0, 2**31 - 1)
 	return anonymize(
 		payload, seed=seed, variance=variance, hints=hints, mapping=mapping, redact_secrets=redact_secrets
 	)

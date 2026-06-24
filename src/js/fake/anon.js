@@ -271,7 +271,12 @@ export async function anonymize(payload, seed = null, variance = 0.25, hints = n
 	return await a.anonymize(payload);
 }
 
-export const fuzz = anonymize;
+export async function fuzz(payload, seed = null, variance = 0.25, hints = null, mapping = null, redactSecrets = false) {
+	if (seed == null) {
+		seed = Math.floor(Math.random() * 2147483647);
+	}
+	return await anonymize(payload, seed, variance, hints, mapping, redactSecrets);
+};
 
 export async function deanonymize(payload, seed = null, variance = 0.25, hints = null, mapping = null) {
 	const a = new Anonymizer(seed, variance, hints, mapping);

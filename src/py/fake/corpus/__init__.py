@@ -122,7 +122,7 @@ def _generate_sentence(model, min_words=4, max_words=30):
 			break
 		current = random.choice(next_words)
 		words.append(current)
-		if len(words) >= min_words and len(words) >= 6:
+		if len(words) >= min_words:
 			break
 	if not words:
 		return ""

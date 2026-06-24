@@ -83,11 +83,6 @@ RECOGNIZERS = {}
 # -----------------------------------------------------------------------------
 
 
-def words(text):
-	"""Return coarse word tokens from `text`."""
-	return WORDS_RE.findall(str(text))
-
-
 def wordParts(text):
 	"""Return normalized word parts from `text` (handles camelCase and punctuation)."""
 	tokens = []

@@ -155,7 +155,7 @@ export const recognizeSymbol = registerMatch("symbol", 95)((value) => {
 	if (typeof value !== "string") return null;
 	if (value.startsWith("eyJ")) return null;
 	if (value.startsWith("sk_live_") || value.startsWith("sk_test_") || value.startsWith("ghp_") || value.startsWith("gho_") || value.startsWith("ghs_") || value.startsWith("AKIA")) return null;
-	if (value.includes(".") && /[A-Z]/.test(value.slice(1))) {
+	if (value.includes(".") && /[A-Z]/.test(value)) {
 		const parts = wordParts(value);
 		if (parts.filter(p => p.length > 1).length >= 3) {
 			return { type: "symbol", confidence: 1 };

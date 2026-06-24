@@ -668,7 +668,6 @@ function apiKey() {
 
 function seed(value) {
 	rng.seed(value);
-	return fake;
 	}
 
 const fake = {
