@@ -9,21 +9,27 @@ import re
 import random
 from html.parser import HTMLParser
 
+from ..data import DATA
+
 ROOT_PATH = os.path.dirname(__file__)
 
 WORD_RE = re.compile(r"[A-Za-zÀ-ÿ0-9]+(?:'[A-Za-zÀ-ÿ0-9]+)?")
 
 CORPORA = {}
 
-LANGUAGE_MAP = {
-	"en": ["en-faust.xml", "en-childharold.xml", "en-decameron.xml", "en-theraven.xml"],
-	"de": ["de-inderfremde.xml"],
-	"fr": ["fr-lebateauivre.xml", "fr-lemasque.xml"],
-	"es": ["es-tierrayluna.xml"],
-	"eo": ["eo-robinsonokruso.xml"],
-	"hu": ["hu-nagyonfaj.xml", "hu-omagyar.xml"],
-	"la": ["la-loremipsum.xml"],
-}
+def getLanguageMap():
+	c = getattr(DATA, "corpora", None)
+	if c and isinstance(c, dict):
+		return c
+	return {
+		"en": ["en-faust.xml", "en-childharold.xml", "en-decameron.xml", "en-theraven.xml"],
+		"de": ["de-inderfremde.xml"],
+		"fr": ["fr-lebateauivre.xml", "fr-lemasque.xml"],
+		"es": ["es-tierrayluna.xml"],
+		"eo": ["eo-robinsonokruso.xml"],
+		"hu": ["hu-nagyonfaj.xml", "hu-omagyar.xml"],
+		"la": ["la-loremipsum.xml"],
+	}
 
 
 class _TextExtractor(HTMLParser):
@@ -49,7 +55,7 @@ class _TextExtractor(HTMLParser):
 				self.lines.append(cleaned)
 
 
-def _read_file(path):
+def readFile(path):
 	for encoding in ("utf-8", "iso-8859-1", "latin-1", "iso-8859-2"):
 		try:
 			with open(path, encoding=encoding) as handle:
@@ -59,27 +65,28 @@ def _read_file(path):
 	return ""
 
 
-def _words_from_text(text):
+def wordsFromText(text):
 	return WORD_RE.findall(text)
 
 
-def _build_bigram(lang):
+def buildBigram(lang):
 	if lang in CORPORA:
 		return CORPORA[lang]
-	filenames = LANGUAGE_MAP.get(lang, LANGUAGE_MAP["la"])
+	languageMap = getLanguageMap()
+	filenames = languageMap.get(lang, languageMap.get("la", []))
 	bigram = {}
 	word_counts = {}
 	for filename in filenames:
 		path = os.path.join(ROOT_PATH, filename)
 		if not os.path.isfile(path):
 			continue
-		content = _read_file(path)
+		content = readFile(path)
 		if not content:
 			continue
 		extractor = _TextExtractor()
 		extractor.feed(content)
 		for line in extractor.lines:
-			tokens = _words_from_text(line)
+			tokens = wordsFromText(line)
 			if len(tokens) < 2:
 				continue
 			for i in range(len(tokens) - 1):
@@ -93,13 +100,13 @@ def _build_bigram(lang):
 		path = os.path.join(ROOT_PATH, filename)
 		if not os.path.isfile(path):
 			continue
-		content = _read_file(path)
+		content = readFile(path)
 		if not content:
 			continue
 		extractor = _TextExtractor()
 		extractor.feed(content)
 		for line in extractor.lines:
-			tokens = _words_from_text(line)
+			tokens = wordsFromText(line)
 			if not tokens:
 				continue
 			first = tokens[0].lower()
@@ -109,20 +116,20 @@ def _build_bigram(lang):
 	return model
 
 
-def _generate_sentence(model, min_words=4, max_words=30):
+def generateSentence(model, minWords=4, maxWords=30):
 	"""Generate a sentence using the bigram model."""
 	bigram = model["bigram"]
 	starters = model["starters"]
 	words = []
 	current = random.choice(starters)
 	words.append(current)
-	for _ in range(max_words - 1):
+	for _ in range(maxWords - 1):
 		next_words = bigram.get(current)
 		if not next_words:
 			break
 		current = random.choice(next_words)
 		words.append(current)
-		if len(words) >= min_words:
+		if len(words) >= minWords:
 			break
 	if not words:
 		return ""
@@ -138,7 +145,7 @@ def markovText(lang="en", length="regular", wordsPerLine=(2, 12)):
 	"regular", "long", or an (int, int) tuple. `wordsPerLine` controls
 	the number of sentences per generated line (default (2, 12)).
 	"""
-	model = _build_bigram(lang)
+	model = buildBigram(lang)
 	computed = length
 	if computed == "one":
 		computed = 1
@@ -158,8 +165,8 @@ def markovText(lang="en", length="regular", wordsPerLine=(2, 12)):
 	for _ in range(random.randrange(*computed)):
 		line = []
 		for _ in range(random.randrange(*wordsPerLine)):
-			line.append(_generate_sentence(model))
+			line.append(generateSentence(model))
 		res.append(" ".join(line))
 	if not res:
-		return _generate_sentence(model)
+		return generateSentence(model)
 	return "\n\n".join(res)

@@ -47,12 +47,18 @@ class Data:
 		"streets"          : "streets.json",
 		"companies"        : "companies.json",
 		"topics"           : "topics.json",
+		"aliases"          : "aliases.json",
+		"anonymizer"       : "anonymizer.json",
+		"calendar"         : "calendar.json",
+		"companySuffixes"  : "company-suffixes.json",
+		"generators"       : "generators.json",
+		"corpora"          : "corpora.json",
 	}
 
 	def __init__( self ):
 		self.data = {}
 
-	def _load( self, dataset ):
+	def load( self, dataset ):
 		if dataset not in self.data:
 			path = os.path.join(DATA_PATH, self.DATASETS[dataset])
 			with open(path) as f:
@@ -61,41 +67,24 @@ class Data:
 
 	def __getattr__( self, name ):
 		if name in self.DATASETS:
-			return self._load(name)
+			return self.load(name)
 		else:
 			return self.__dict__[name]
 
 DATA = Data ()
 
 COMPANY_WORD_RE = re.compile(r"[A-Za-z0-9]+")
-COMPANY_SUFFIXES_BY_TOKENS = {
-	("inc",): "Inc.",
-	("incorporated",): "Incorporated",
-	("corporation",): "Corporation",
-	("corp",): "Corp.",
-	("company",): "Company",
-	("co",): "Co.",
-	("group",): "Group",
-	("holding",): "Holding",
-	("holdings",): "Holdings",
-	("llc",): "LLC",
-	("ltd",): "Ltd.",
-	("limited",): "Limited",
-	("plc",): "PLC",
-	("lp",): "L.P.",
-	("partners",): "Partners",
-}
-COMPANY_SUFFIX_TOKENS = {token for suffix_tokens in COMPANY_SUFFIXES_BY_TOKENS for token in suffix_tokens}
 COMPANY_WORDS = None
 COMPANY_SUFFIXES = None
 
 
-def _normalize_company_word(word):
+def normalizeCompanyWord(word):
 	if not word:
 		return None
 	if word.isdigit() or len(word) <= 2 and not word.isupper():
 		return None
-	if word.lower() in COMPANY_SUFFIX_TOKENS:
+	suffixes = DATA.companySuffixes.get("suffixes", {}) if hasattr(DATA, "companySuffixes") else {}
+	if word.lower() in suffixes:
 		return None
 	if word.lower() in {"and", "the", "of"}:
 		return None
@@ -104,20 +93,22 @@ def _normalize_company_word(word):
 	return word[0].upper() + word[1:].lower()
 
 
-def _load_company_terms():
+def loadCompanyTerms():
 	words = {}
 	suffixes = {}
+	suffix_map = DATA.companySuffixes.get("suffixes", {}) if hasattr(DATA, "companySuffixes") else {}
 	for company_name in DATA.companies:
 		tokens = COMPANY_WORD_RE.findall(company_name)
 		if not tokens:
 			continue
 		suffix = None
-		for suffix_tokens in sorted(COMPANY_SUFFIXES_BY_TOKENS, key=len, reverse=True):
-			length = len(suffix_tokens)
+		sorted_suffixes = sorted(suffix_map.items(), key=lambda x: len(x[0]), reverse=True)
+		for suffix_key, formatted in sorted_suffixes:
+			length = len(suffix_key.split())
 			if len(tokens) < length:
 				continue
-			if tuple(token.lower() for token in tokens[-length:]) == suffix_tokens:
-				suffix = COMPANY_SUFFIXES_BY_TOKENS[suffix_tokens]
+			if tuple(token.lower() for token in tokens[-length:]) == tuple(suffix_key.split()):
+				suffix = formatted
 				tokens = tokens[:-length]
 				break
 		if suffix:
@@ -125,21 +116,21 @@ def _load_company_terms():
 		if len(tokens) == 1:
 			continue
 		for token in tokens:
-			normalized = _normalize_company_word(token)
+			normalized = normalizeCompanyWord(token)
 			if normalized:
 				words[normalized] = None
 	return tuple(words), tuple(suffixes)
 
 
-def _company_terms():
+def companyTerms():
 	global COMPANY_WORDS, COMPANY_SUFFIXES
 	if COMPANY_WORDS is None or COMPANY_SUFFIXES is None:
-		COMPANY_WORDS, COMPANY_SUFFIXES = _load_company_terms()
+		COMPANY_WORDS, COMPANY_SUFFIXES = loadCompanyTerms()
 	return COMPANY_WORDS, COMPANY_SUFFIXES
 
 
-def _company_name():
-	words, suffixes = _company_terms()
+def companyName():
+	words, suffixes = companyTerms()
 	first = random.choice(words)
 	parts = [first]
 	if len(words) > 1:
@@ -167,7 +158,7 @@ def emails(count=10):
 	return [email() for _ in range(count)]
 
 def company():
-	return _company_name()
+	return companyName()
 
 def user():
 	return random.choice(DATA.users)
@@ -217,15 +208,10 @@ def country():
 # -----------------------------------------------------------------------------
 
 def day():
-	return random.choice((
-		"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"
-	))
+	return random.choice(DATA.calendar.get("days", []))
 
 def month():
-	return random.choice((
-		"January", "February", "March", "April", "May", "June", "July",
-		"August", "September", "October", "November", "December",
-	))
+	return random.choice(DATA.calendar.get("months", []))
 
 def seconds():
 	return random.randint(0,59)
@@ -353,13 +339,15 @@ def seed(value):
 
 
 def password():
-	chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*"
+	g = DATA.generators if hasattr(DATA, "generators") else {}
+	chars = g.get("passwordChars", "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*")
 	length = random.randint(12, 24)
 	return "".join(random.choice(chars) for _ in range(length))
 
 
 def apiKey():
-	prefixes = ["sk_live_", "sk_test_", "ghp_", "AKIA"]
+	g = DATA.generators if hasattr(DATA, "generators") else {}
+	prefixes = g.get("apiKeyPrefixes", ["sk_live_", "sk_test_", "ghp_", "AKIA"])
 	prefix = random.choice(prefixes)
 	chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 	return prefix + "".join(random.choice(chars) for _ in range(24 if prefix.startswith("sk") else 16))

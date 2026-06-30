@@ -6,72 +6,19 @@
 import re
 from urllib.parse import urlsplit
 
+from .data import DATA
+
 EMAIL_RE = re.compile(r"^[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)+$")
 PHONE_RE = re.compile(r"^\+?[\d().\-\s]{7,}$")
 DATE_RE = re.compile(r"^(\d{4})-(\d{2})-(\d{2})$")
 DATETIME_RE = re.compile(r"^(\d{4})-(\d{2})-(\d{2})([T ])(\d{2}):(\d{2})(?::(\d{2})(\.\d{1,6})?)?(Z|[+-]\d{2}:?\d{2})?$")
 WORDS_RE = re.compile(r"[A-Za-z0-9]+(?:'[A-Za-z0-9]+)?")
 
-WORD_ALIASES = {
-	"acc": ["acc"],
-	"addr": ["address"],
-	"advisor": ["adviser"],
-	"amount": ["price", "cost", "expense", "salary", "total", "balance", "fee", "tax"],
-	"bcc": ["email"],
-	"billing": ["payment", "amount"],
-	"city": ["town"],
-	"companies": ["company"],
-	"company": ["organisation"],
-	"count": ["quantity", "qty", "volume"],
-	"country": ["nation"],
-	"dob": ["date", "birth"],
-	"expense": ["amount"],
-	"firstname": ["first", "name"],
-	"lastname": ["last", "name", "surname"],
-	"mobilephone": ["mobile", "phone"],
-	"organisations": ["organisation"],
-	"organizations": ["organisation"],
-	"percent": ["percentage", "ratio"],
-	"phone": ["phone", "mobile"],
-	"postcode": ["post", "code"],
-	"postaladdress": ["postal", "address"],
-	"price": ["amount"],
-	"qty": ["quantity", "count"],
-	"salary": ["amount", "income"],
-	"town": ["city"],
-	"url": ["link"],
-	"username": ["user", "name"],
-	"zip": ["post", "code"],
-	"password": ["passwd", "pwd"],
-	"secret": ["secrets", "credential", "key"],
-	"token": ["authtoken", "auth_token", "accesstoken", "access_token", "refreshtoken"],
-	"apikey": ["api_key", "apiKey", "client_secret"],
-}
-
-TYPE_ALIASES = {
-	"gender": ["gender", "sex", "pronoun", "title"],
-	"identifier": ["id", "identifier", "number", "code", "ref", "reference", "uuid", "fsp"],
-	"amount": ["amount", "price", "cost", "expense", "salary", "subtotal", "total", "balance", "income", "revenue", "fee", "tax", "payment", "charge", "premium", "wage", "budget", "profit", "credit", "debit"],
-	"count": ["count", "quantity", "qty", "items", "units", "volume", "copies"],
-	"percentage": ["percentage", "percent", "ratio", "rate", "share", "margin"],
-	"age": ["age", "aged"],
-	"year": ["year", "yr", "fiscal", "calendar"],
-	"email": ["email", "mail", "bcc", "cc"],
-	"phone": ["phone", "mobile", "telephone", "tel", "fax", "cell"],
-	"name": ["name", "customer", "client", "person", "contact", "employee", "owner", "member"],
-	"first_name": ["firstname", "first", "given", "forename"],
-	"last_name": ["lastname", "last", "surname", "family"],
-	"address": ["address", "street", "road", "line", "billing", "shipping", "postal"],
-	"city": ["city", "town", "suburb"],
-	"country": ["country", "nation", "state"],
-	"company": ["company", "organisation", "organization", "business", "employer"],
-	"user": ["user", "username", "login", "account", "handle"],
-	"date": ["date", "dob", "birthday", "birth", "issued", "expiry", "expires", "start", "end"],
-	"datetime": ["datetime", "timestamp", "created", "updated", "modified", "at", "time"],
-	"url": ["url", "uri", "link", "website", "site", "domain"],
-	"symbol": ["symbol", "fqcn", "classname", "class", "type"],
-	"secret": ["password", "secret", "token", "apikey", "credential", "auth", "key"],
-}
+def getAliases():
+	a = getattr(DATA, "aliases", None)
+	if a:
+		return a.get("wordAliases", {}), a.get("typeAliases", {})
+	return {}, {}
 
 RECOGNIZERS = {}
 
@@ -123,14 +70,15 @@ def normalizeWord(wordValue):
 
 
 def semanticTokens(text):
-	"""Return deduplicated semantic tokens for `text` (includes aliases from WORD_ALIASES)."""
+	"""Return deduplicated semantic tokens for `text` (includes aliases from data)."""
+	wordAliases, _ = getAliases()
 	tokens = []
 	for token in wordParts(text):
 		normalized = normalizeWord(token)
 		if not normalized:
 			continue
 		tokens.append(normalized)
-		for alias in WORD_ALIASES.get(normalized, []):
+		for alias in wordAliases.get(normalized, []):
 			normalized_alias = normalizeWord(alias)
 			if normalized_alias:
 				tokens.append(normalized_alias)
@@ -161,7 +109,8 @@ def overlapScore(left, right):
 def registerMatch(kind, priority=0):
 	"""Register a recognizer `fn` for `kind` with given `priority` (higher wins)."""
 	def decorator(fn):
-		RECOGNIZERS[kind] = {"fn": fn, "priority": priority, "aliases": TYPE_ALIASES.get(kind, [kind])}
+		_, typeAliases = getAliases()
+		RECOGNIZERS[kind] = {"fn": fn, "priority": priority, "aliases": typeAliases.get(kind, [kind])}
 		return fn
 
 	return decorator
@@ -203,6 +152,8 @@ def recognizePhone(value, path=None, context=None, hints=None):
 		return None
 	if DATE_RE.match(value) or DATETIME_RE.match(value):
 		return None
+	if re.search(r"\.\d", value):
+		return None
 	digits = re.sub(r"\D", "", value)
 	if 7 <= len(digits) <= 15:
 		return {"type": "phone", "confidence": 1.0}
@@ -216,6 +167,10 @@ def recognizeSymbol(value, path=None, context=None, hints=None):
 		return None
 	if value.startswith("eyJ") or value.startswith(("sk_live_", "sk_test_", "ghp_", "gho_", "ghs_", "AKIA")):
 		return None
+	if DATE_RE.match(value) or DATETIME_RE.match(value):
+		return None
+	if value.isupper() and value.isalpha() and 2 <= len(value) <= 8:
+		return {"type": "symbol", "confidence": 0.9}
 	if "." in value and any(c.isupper() for c in value):
 		parts = wordParts(value)
 		if len([p for p in parts if len(p) > 1]) >= 3:

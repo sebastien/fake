@@ -46,6 +46,7 @@ fake deanon -s SEED -d mapping.json DATA.json
 - `anon` / `redact` anonymizes a JSON file (with optional `--redact-secrets` for passwords/tokens/API keys) and writes to stdout
 - `deanon` restores an anonymized JSON file with the same `--seed` and a mapping file
 - anon/deanon default to a fixed seed of `0` when `--seed` is omitted
+- `--hint key=kind` (repeatable) forces field classification, e.g. `--hint lastName=last_name --hint x=pii_string`
 - If `TYPE` is a JSON file path, the CLI anonymizes it and writes the anonymized JSON to stdout
 
 Examples:
@@ -168,9 +169,13 @@ name.
 # Anonymize / Redact Secrets
 
 `fake.anonymize(payload, seed=None, variance=0.25, hints=None, mapping=None, redact_secrets=False)`
-(and alias `fake.fuzz()`) walks a JSON-like payload, guesses likely field types from key names and value
+(and alias `fake.fuzz()`) walks a JSON-like payload, guesses likely field types from key names (keys containing "name", "lastName", "address", "street", "email", "dob", "date", "city", "suburb" etc. are broadly recognized) and value
 patterns (including high-entropy secrets, passwords, tokens, API keys), and returns both the anonymized payload and a
 minimal reusable reverse mapping.
+
+`hints={"lastName": "last_name", "myField": "pii_string", "dobCol": "date"}` forces classification for custom keys.
+Dates under date-like keys are fuzzed by a few weeks (small deterministic jitter).
+Generic name fields without person-name values fall back to `[PII-...]` via pii_string.
 
 Use `fake.redact(payload, ...)` or `redact_secrets=True` to enable secret redaction (replaces with `[REDACTED-SECRET-...]`
 and adds `"secrets": true` to the mapping so it can be stored securely).
@@ -201,6 +206,4 @@ that were anonymized elsewhere in the payload. `fake.fuzz(...)` is an alias for
 `fake.anonymize(...)`.
 
 With the same payload and the same seed, anonymization is reproducible. The
-reverse mapping only keeps entries for string-like values that cannot be
-recovered algorithmically, so numeric, date, datetime and phone transforms do
-not grow the mapping.
+reverse mapping keeps entries for transformed PII (names, dates with jitter, phones, pii_strings etc.).

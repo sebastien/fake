@@ -12,6 +12,12 @@ const DATASETS = {
 	streets: "streets.json",
 	companies: "companies.json",
 	topics: "topics.json",
+	aliases: "aliases.json",
+	anonymizer: "anonymizer.json",
+	calendar: "calendar.json",
+	companySuffixes: "company-suffixes.json",
+	generators: "generators.json",
+	corpora: "corpora.json",
 };
 
 const DEFAULT_BASE_URLS = [
@@ -19,14 +25,18 @@ const DEFAULT_BASE_URLS = [
 	"https://raw.githubusercontent.com/sebastien/fake/main/src/py/fake/data/",
 ];
 
-const DAYS = [
-	"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday",
-];
+function getDays() {
+	const c = state.data.calendar || {};
+	return c.days || ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+}
 
-const MONTHS = [
-	"January", "February", "March", "April", "May", "June", "July",
-	"August", "September", "October", "November", "December",
-];
+function getMonths() {
+	const c = state.data.calendar || {};
+	return c.months || [
+		"January", "February", "March", "April", "May", "June", "July",
+		"August", "September", "October", "November", "December",
+	];
+}
 
 const state = {
 	baseUrls: [...DEFAULT_BASE_URLS],
@@ -300,6 +310,8 @@ async function fetchDataset(fileName) {
 	throw new Error(`Unable to load dataset ${fileName}: ${errors.join("; ")}`);
 	}
 
+const OPTIONAL_DATASETS = new Set(["aliases", "anonymizer", "calendar", "companySuffixes", "generators", "corpora"]);
+
 async function loadDataset(name, fileName) {
 	if (Object.hasOwn(state.data, name)) {
 		return state.data[name];
@@ -311,10 +323,18 @@ async function loadDataset(name, fileName) {
 		return cached;
 	}
 
-	const data = await fetchDataset(fileName);
-	state.data[name] = data;
-	await writeCachedDataset(fileName, data);
-	return data;
+	try {
+		const data = await fetchDataset(fileName);
+		state.data[name] = data;
+		await writeCachedDataset(fileName, data);
+		return data;
+		} catch (_e) {
+			if (OPTIONAL_DATASETS.has(name)) {
+				// optional data files may not be present remotely yet; consumers fall back
+				return null;
+		}
+		throw e;
+	}
 	}
 
 async function preload(options = {}) {
@@ -329,7 +349,11 @@ async function preload(options = {}) {
 	state.loadPromise = (async () => {
 		const entries = Object.entries(DATASETS);
 		for (const [name, fileName] of entries) {
-			await loadDataset(name, fileName);
+			try {
+				await loadDataset(name, fileName);
+			} catch (_e) {
+				// optional datasets may be absent (e.g. not yet on CDN); core ones would have thrown inside loadDataset
+			}
 		}
 		state.loaded = true;
 	})();
@@ -402,7 +426,7 @@ function normalizeCompanyWord(word) {
 function loadCompanyTerms() {
 	const words = {};
 	const suffixes = {};
-	const names = assertPreloaded("companyTerms").companies;
+  const names = assertPreloaded("companies").companies;
 	const suffixEntries = Object.entries(COMPANY_SUFFIXES_BY_TOKENS).sort((a, b) => b[0].length - a[0].length);
 	for (const companyName of names) {
 		const tokens = companyName.match(COMPANY_WORD_RE) || [];
@@ -508,11 +532,11 @@ function country() {
 	}
 
 function day() {
-	return choice(DAYS);
+	return choice(getDays());
 	}
 
 function month() {
-	return choice(MONTHS);
+	return choice(getMonths());
 	}
 
 function seconds() {
@@ -749,5 +773,13 @@ export {
 	apiKey,
 	seed,
 };
+
+export function getDataset(name) {
+	return state.data[name];
+}
+
+export function getAnonymizerPools() {
+	return state.data.anonymizer || {};
+}
 
 export default fake;

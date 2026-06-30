@@ -21,6 +21,7 @@
     ],
     "pii_paths": [
       "contact.firstName",
+      "contact.lastName",
       "contact.email",
       "contact.phone"
     ]

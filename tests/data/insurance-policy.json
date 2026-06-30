@@ -32,9 +32,12 @@
     ],
     "pii_paths": [
       "policy.holder.firstName",
+      "policy.holder.lastName",
       "policy.holder.email",
       "policy.holder.phone",
-      "policy.beneficiaries.0.firstName"
+      "policy.beneficiaries.0.firstName",
+      "policy.beneficiaries.0.lastName",
+      "policy.holder.dateOfBirth"
     ]
   }
 }

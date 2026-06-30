@@ -134,15 +134,31 @@ def _is_file_target(name):
 	return os.path.isfile(name)
 
 
-def _run_file_mode(path, extra_args, output_format, seed=None, dict_path=None, redact_secrets=False):
+def _run_file_mode(path, extra_args, output_format, seed=None, dict_path=None, redact_secrets=False, hints=None, whitelists=None, blacklists=None):
 	if extra_args:
 		_error("unexpected argument: {0}".format(extra_args[0]))
 	payload = _load_json_file(path)
+	hints_dict = {}
+	if hints:
+		for h in hints:
+			if "=" in h:
+				k, v = h.split("=", 1)
+				hints_dict[k] = v
+	whitelist_dict = {}
+	if whitelists:
+		for h in whitelists:
+			if "=" in h:
+				k, v = h.split("=", 1)
+				whitelist_dict[k] = v
+	blacklist_list = blacklists or None
 	result = fake.anonymize(
 		payload,
 		seed=seed,
 		mapping=_load_json_file(dict_path) if dict_path and os.path.exists(dict_path) else None,
 		redact_secrets=redact_secrets,
+		hints=hints_dict or None,
+		whitelist=whitelist_dict or None,
+		blacklist=blacklist_list,
 	)
 	if dict_path:
 		_write_json_file(dict_path, result["mapping"])
@@ -156,14 +172,27 @@ def _run_file_mode(path, extra_args, output_format, seed=None, dict_path=None, r
 	return 0
 
 
-def _run_deanon_mode(path, extra_args, output_format, seed=None, dict_path=None):
+def _run_deanon_mode(path, extra_args, output_format, seed=None, dict_path=None, hints=None, whitelists=None, blacklists=None):
 	if extra_args:
 		_error("unexpected argument: {0}".format(extra_args[0]))
 	if not dict_path:
 		_error("--dict is required for deanon")
 	payload = _load_json_file(path)
 	mapping = _load_json_file(dict_path)
-	value = fake.deanonymize(payload, seed=seed, mapping=mapping)
+	hints_dict = {}
+	if hints:
+		for h in hints:
+			if "=" in h:
+				k, v = h.split("=", 1)
+				hints_dict[k] = v
+	whitelist_dict = {}
+	if whitelists:
+		for h in whitelists:
+			if "=" in h:
+				k, v = h.split("=", 1)
+				whitelist_dict[k] = v
+	blacklist_list = blacklists or None
+	value = fake.deanonymize(payload, seed=seed, mapping=mapping, hints=hints_dict or None, whitelist=whitelist_dict or None, blacklist=blacklist_list)
 	if output_format == "json":
 		json.dump(value, sys.stdout, default=str)
 		sys.stdout.write("\n")
@@ -259,6 +288,9 @@ def _parse_json_mode_args(command, tokens, seed=None, dict_path=None, output_for
 	parser.add_argument("-s", "--seed", default=seed)
 	parser.add_argument("-d", "--dict", dest="dict_path", default=dict_path)
 	parser.add_argument("-f", "--format", choices=("text", "json"), default=output_format)
+	parser.add_argument("--hint", dest="hints", action="append", default=[])
+	parser.add_argument("--whitelist", dest="whitelists", action="append", default=[])
+	parser.add_argument("--blacklist", dest="blacklists", action="append", default=[])
 	parser.add_argument("file")
 	try:
 		return parser.parse_args(tokens)
@@ -282,18 +314,44 @@ def main(argv=None):
 	try:
 		if args.type == "anon":
 			parsed = _parse_json_mode_args("anon", args.args, seed=args.seed, dict_path=args.dict_path, output_format=args.format)
-			return _run_file_mode(parsed.file, [], parsed.format, seed=parsed.seed, dict_path=parsed.dict_path)
+			return _run_file_mode(parsed.file, [], parsed.format, seed=parsed.seed, dict_path=parsed.dict_path, hints=parsed.hints, whitelists=parsed.whitelists, blacklists=parsed.blacklists)
 		if args.type == "deanon":
 			parsed = _parse_json_mode_args("deanon", args.args, seed=args.seed, dict_path=args.dict_path, output_format=args.format)
-			return _run_deanon_mode(parsed.file, [], parsed.format, seed=parsed.seed, dict_path=parsed.dict_path)
+			return _run_deanon_mode(parsed.file, [], parsed.format, seed=parsed.seed, dict_path=parsed.dict_path, hints=parsed.hints, whitelists=parsed.whitelists, blacklists=parsed.blacklists)
 		if args.type in ("anonymize", "fuzz", "redact"):
 			if not args.args:
 				_error("the following arguments are required: file")
 			redact_secrets = args.type == "redact"
-			return _run_file_mode(args.args[0], args.args[1:], args.format, seed=args.seed, dict_path=args.dict_path, redact_secrets=redact_secrets)
+			# collect hints and find file (last non --* arg)
+			rem = list(args.args)
+			hints_list = []
+			file_arg = None
+			i = 0
+			while i < len(rem):
+				if rem[i] in ("--hint",):
+					if i + 1 < len(rem):
+						hints_list.append(rem[i+1])
+						i += 2
+						continue
+				elif not rem[i].startswith("-") and file_arg is None:
+					file_arg = rem[i]
+				i += 1
+			if not file_arg:
+				file_arg = rem[-1]
+			return _run_file_mode(file_arg, [], args.format, seed=args.seed, dict_path=args.dict_path, redact_secrets=redact_secrets, hints=hints_list, whitelists=[], blacklists=[])
 		if _is_file_target(args.type):
 			redact_secrets = args.type.endswith(".json") and any(x in args.type.lower() for x in ("secret", "password", "token", "key"))
-			return _run_file_mode(args.type, args.args, args.format, seed=args.seed, dict_path=args.dict_path, redact_secrets=redact_secrets)
+			rem = list(args.args)
+			hints_list = []
+			i = 0
+			while i < len(rem):
+				if rem[i] in ("--hint",):
+					if i + 1 < len(rem):
+						hints_list.append(rem[i+1])
+						i += 2
+						continue
+				i += 1
+			return _run_file_mode(args.type, [], args.format, seed=args.seed, dict_path=args.dict_path, redact_secrets=redact_secrets, hints=hints_list, whitelists=[], blacklists=[])
 
 		generator = _resolve_generator(args.type)
 		if args.seed is not None:

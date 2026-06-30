@@ -1,0 +1,4 @@
+{
+  "passwordChars": "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*",
+  "apiKeyPrefixes": ["sk_live_", "sk_test_", "ghp_", "AKIA"]
+}

@@ -14,15 +14,19 @@ export const WORD_ALIASES = {
 	amount: ["price", "cost", "expense", "salary", "total", "balance", "fee", "tax"],
 	bcc: ["email"],
 	billing: ["payment", "amount"],
+	birthdate: ["birth", "date", "dob"],
 	city: ["town"],
 	companies: ["company"],
 	company: ["organisation"],
 	count: ["quantity", "qty", "volume"],
 	country: ["nation"],
+	dateofbirth: ["dob", "birth", "date"],
 	dob: ["date", "birth"],
 	expense: ["amount"],
+	familyname: ["family", "name", "surname"],
 	firstname: ["first", "name"],
 	lastname: ["last", "name", "surname"],
+	middlename: ["middle", "name"],
 	mobilephone: ["mobile", "phone"],
 	organisations: ["organisation"],
 	organizations: ["organisation"],
@@ -33,6 +37,8 @@ export const WORD_ALIASES = {
 	price: ["amount"],
 	qty: ["quantity", "count"],
 	salary: ["amount", "income"],
+	street1: ["street", "address"],
+	street2: ["street", "address"],
 	town: ["city"],
 	url: ["link"],
 	username: ["user", "name"],
@@ -55,13 +61,14 @@ export const TYPE_ALIASES = {
 	phone: ["phone", "mobile", "telephone", "tel", "fax", "cell"],
 	name: ["name", "customer", "client", "person", "contact", "employee", "owner", "member"],
 	first_name: ["firstname", "first", "given", "forename"],
-	last_name: ["lastname", "last", "surname", "family"],
-	address: ["address", "street", "road", "line", "billing", "shipping", "postal"],
+	last_name: ["lastname", "last", "surname", "family", "familyname"],
+	middle_name: ["middle", "middlename"],
+	address: ["address", "street", "road", "line", "billing", "shipping", "postal", "addr", "street1", "street2"],
 	city: ["city", "town", "suburb"],
 	country: ["country", "nation", "state"],
 	company: ["company", "organisation", "organization", "business", "employer"],
 	user: ["user", "username", "login", "account", "handle"],
-	date: ["date", "dob", "birthday", "birth", "issued", "expiry", "expires", "start", "end"],
+	date: ["date", "dob", "birthday", "birth", "issued", "expiry", "expires", "start", "end", "birthdate", "dateofbirth"],
 	datetime: ["datetime", "timestamp", "created", "updated", "modified", "at", "time"],
 	url: ["url", "uri", "link", "website", "site", "domain"],
 	symbol: ["symbol", "fqcn", "classname", "class", "type"],
@@ -146,6 +153,7 @@ export const recognizeUrl = registerMatch("url", 90)((value) => {
 export const recognizePhone = registerMatch("phone", 80)((value) => {
 	if (typeof value !== "string" || !PHONE_RE.test(value)) return null;
 	if (DATE_RE.test(value) || DATETIME_RE.test(value)) return null;
+	if (/\.\d/.test(value)) return null;
 	const digits = value.replace(/\D/g, "");
 	if (digits.length >= 7 && digits.length <= 15) return { type: "phone", confidence: 1 };
 	return null;
@@ -155,6 +163,10 @@ export const recognizeSymbol = registerMatch("symbol", 95)((value) => {
 	if (typeof value !== "string") return null;
 	if (value.startsWith("eyJ")) return null;
 	if (value.startsWith("sk_live_") || value.startsWith("sk_test_") || value.startsWith("ghp_") || value.startsWith("gho_") || value.startsWith("ghs_") || value.startsWith("AKIA")) return null;
+	if (DATE_RE.test(value) || DATETIME_RE.test(value)) return null;
+	if (/^[A-Z]{2,8}$/.test(value)) {
+		return { type: "symbol", confidence: 0.9 };
+	}
 	if (value.includes(".") && /[A-Z]/.test(value)) {
 		const parts = wordParts(value);
 		if (parts.filter(p => p.length > 1).length >= 3) {
@@ -181,6 +193,7 @@ export const recognizeSecret = registerMatch("secret", 85)((value, _path, contex
 
 export default {
 	RECOGNIZERS,
+	TYPE_ALIASES,
 	registerMatch,
 	wordParts,
 	normalizeWord,

@@ -5,7 +5,7 @@
 # Thin export surface. Implementation lives in data.py and anon.py.
 # -----------------------------------------------------------------------------
 
-from .anon import anonymize, fuzz, deanonymize, redact  # noqa: F401
+from .anon import anonymize, fuzz, deanonymize, redact, guessAnonymizationCategory  # noqa: F401
 
 from .data import (
     VERSION,
@@ -52,6 +52,7 @@ __all__ = [
     "fuzz",
     "deanonymize",
     "redact",
+    "guessAnonymizationCategory",
     "seed",
     "name",
     "firstName",

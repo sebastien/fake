@@ -30,6 +30,7 @@
     ],
     "pii_paths": [
       "statement.account.firstName",
+      "statement.account.lastName",
       "statement.account.email",
       "statement.account.phone"
     ]

@@ -1,0 +1,27 @@
+{
+  "firstNames": ["Patsy", "Tami", "Vicky", "Aldo", "Layla", "Jack", "Aaron", "Abigail", "Adam", "Adrian", "Aiden", "Alexander", "Alice", "Alyssa", "Andrew", "Anna", "Anthony", "Aria", "Asher", "Ava", "Benjamin", "Brooklyn", "Caleb", "Camila", "Carter", "Charlotte", "Chloe", "Christopher", "Daniel", "David", "Dylan", "Eleanor", "Elijah", "Elizabeth", "Ella", "Emily", "Emma", "Ethan", "Evelyn", "Gabriel"],
+  "lastNames": ["Benson", "Carter", "Diaz", "Hughes", "Mills", "Shaw", "Smith", "Johnson", "Williams", "Jones", "Brown", "Davis", "Miller", "Wilson", "Moore", "Taylor", "Anderson", "Thomas", "Jackson", "White", "Harris", "Martin", "Thompson", "Garcia", "Martinez", "Robinson", "Clark", "Rodriguez", "Lewis", "Lee", "Walker", "Hall", "Allen", "Young", "Hernandez", "King", "Wright", "Lopez", "Hill", "Scott"],
+  "emailUsers": ["patsy", "tami", "vicky", "aldo", "layla", "jack", "aaron", "abigail", "adam", "adrian", "aiden", "alex", "alice", "alyssa", "andrew", "anna", "anthony", "aria", "asher", "ava", "ben", "brook", "caleb", "camila", "carter", "charlotte", "chloe", "chris", "daniel", "david", "dylan", "eleanor", "elijah", "liz", "ella", "emily", "emma", "ethan", "evelyn", "gabe"],
+  "emailDomains": ["example.test", "mail.test", "demo.test", "testmail.com"],
+  "streetNames": ["Main Street", "Oak Avenue", "Pine Road", "Maple Lane", "Cedar Drive", "Willow Way", "River Road", "High Street"],
+  "cities": ["Auckland", "Wellington", "Christchurch", "Queenstown", "Hamilton", "Dunedin"],
+  "personNameContextTokens": [
+    "name", "firstname", "lastname", "middlename", "surname", "familyname",
+    "given", "forename", "fullname", "preferredname", "displayname",
+    "adviser", "advisor", "applicant", "borrower", "customer", "client"
+  ],
+  "nonPersonNameContextTokens": [
+    "company", "organisation", "business", "employer", "file", "document",
+    "image", "path", "folder", "directory", "product", "event", "project",
+    "class", "type", "symbol", "domain", "site", "website", "url", "uri",
+    "provider", "lender", "bank", "insurer", "broker", "status", "state",
+    "region", "auth", "factor", "twofactor", "validation", "verification",
+    "setting", "config", "preference", "option", "flag", "mode", "level",
+    "gender", "sex", "title", "marital", "employment", "residency",
+    "licence", "license", "sales", "living", "situation", "source",
+    "short", "code", "period", "unit", "display", "category", "enum",
+    "statu", "role", "public", "history", "day", "days", "count",
+    "review", "service"
+  ],
+  "structuralContextTokens": ["person", "household", "assessment", "item", "*", "attributes"]
+}

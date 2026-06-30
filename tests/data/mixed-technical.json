@@ -28,6 +28,7 @@
     ],
     "pii_paths": [
       "assessment.owner.firstName",
+      "assessment.owner.lastName",
       "assessment.owner.email",
       "assessment.owner.phone"
     ]

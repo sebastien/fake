@@ -24,8 +24,10 @@
     ],
     "pii_paths": [
       "patient.firstName",
+      "patient.lastName",
       "patient.email",
-      "patient.phone"
+      "patient.phone",
+      "patient.dateOfBirth"
     ]
   }
 }

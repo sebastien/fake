@@ -19,6 +19,7 @@
     ],
     "pii_paths": [
       "employee.firstName",
+      "employee.lastName",
       "employee.email",
       "employee.phone"
     ]

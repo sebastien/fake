@@ -27,6 +27,7 @@
     ],
     "pii_paths": [
       "order.customer.firstName",
+      "order.customer.lastName",
       "order.customer.email",
       "order.customer.phone"
     ]

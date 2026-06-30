@@ -1,0 +1,9 @@
+{
+  "en": ["en-faust.xml", "en-childharold.xml", "en-decameron.xml", "en-theraven.xml"],
+  "de": ["de-inderfremde.xml"],
+  "fr": ["fr-lebateauivre.xml", "fr-lemasque.xml"],
+  "es": ["es-tierrayluna.xml"],
+  "eo": ["eo-robinsonokruso.xml"],
+  "hu": ["hu-nagyonfaj.xml", "hu-omagyar.xml"],
+  "la": ["la-loremipsum.xml"]
+}

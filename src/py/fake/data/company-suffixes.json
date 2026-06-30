@@ -1,0 +1,19 @@
+{
+  "suffixes": {
+    "inc": "Inc.",
+    "incorporated": "Incorporated",
+    "corporation": "Corporation",
+    "corp": "Corp.",
+    "company": "Company",
+    "co": "Co.",
+    "group": "Group",
+    "holding": "Holding",
+    "holdings": "Holdings",
+    "llc": "LLC",
+    "ltd": "Ltd.",
+    "limited": "Limited",
+    "plc": "PLC",
+    "lp": "L.P.",
+    "partners": "Partners"
+  }
+}
